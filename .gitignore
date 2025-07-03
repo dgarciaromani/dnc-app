@@ -1,0 +1,5 @@
+database.db
+.secrets.toml
+.streamlit/secrets.toml
+*.pyc
+__pycache__/
