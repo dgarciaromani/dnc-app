@@ -56,10 +56,13 @@ CREATE TABLE IF NOT EXISTS final_plan (
     objetivo_desempeno TEXT,
     contenidos_especificos TEXT,
     skills TEXT,
+    keywords TEXT,
     modalidad_sugerida TEXT,
     audiencia TEXT,
     prioridad TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    linkedin_course TEXT,
+    linkedin_url TEXT
 )
 """)
 

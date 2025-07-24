@@ -27,6 +27,7 @@ SELECT
     objetivo_desempeno AS Objetivo_Desempeño, 
     contenidos_especificos AS Contenidos, 
     skills AS Skills, 
+    keywords AS Keywords,
     modalidad_sugerida AS Modalidad, 
     audiencia AS Audiencia, 
     prioridad AS Prioridad, 

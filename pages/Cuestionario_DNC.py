@@ -6,6 +6,35 @@ import json
 from datetime import datetime
 from selectbox_options import GERENCIAS, SUBGERENCIAS, AREAS, DESAFIOS, MAXNEEDS, AUDIENCIAS, PRIORIDAD, MODALIDADES
 
+def get_from_ai(prompt, need_json, plan_json):
+    # Prepare API call
+    url = st.secrets["url"]
+    auth_token = st.secrets["auth_token"]
+    headers = {
+        "Authorization": f"Bearer {auth_token}",
+        "Content-Type": "application/json",
+        "accept": "application/json"
+    }
+
+    payload = {
+        "model": "us.deepseek.r1-v1:0",  # Change if needed
+        "conversation": [
+            {
+                "content": [
+                    {"text": prompt},
+                    {"text": need_json},
+                    {"text": plan_json}
+                ],
+                "role": "user"
+            }
+        ]
+    }
+
+    # Make the request
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    print("Response status code:", response.status_code)  # Debugging
+    return response
+
 # Make page use full width
 st.set_page_config(layout="wide")
 
@@ -219,6 +248,7 @@ else:
                         objetivo_desempeno,
                         contenidos_especificos,
                         skills,
+                        keywords,
                         modalidad_sugerida,
                         audiencia,
                         prioridad
@@ -237,40 +267,14 @@ else:
                         "objetivo_desempeno": row[5],
                         "contenidos_especificos": row[6],
                         "skills": row[7],
-                        "modalidad_sugerida": row[8],
-                        "audiencia": row[9],
-                        "prioridad": row[10]
+                        "keywords": row[8],
+                        "modalidad_sugerida": row[9],
+                        "audiencia": row[10],
+                        "prioridad": row[11]
                     })
                 plan_json = json.dumps(plan_list, ensure_ascii=False, indent=2)
 
-                # Prepare API call
-                url = st.secrets["url"]
-                auth_token = st.secrets["auth_token"]
-                prompt = st.secrets["prompt_add"]
-                headers = {
-                    "Authorization": f"Bearer {auth_token}",
-                    "Content-Type": "application/json",
-                    "accept": "application/json"
-                }
-
-                payload = {
-                    "model": "us.deepseek.r1-v1:0",  # Change if needed
-                    "conversation": [
-                        {
-                            "content": [
-                                {"text": prompt},
-                                {"text": need_json},
-                                {"text": plan_json}
-                            ],
-                            "role": "user"
-                        }
-                    ]
-                }
-
-                # Make the request
-                response = requests.post(url, headers=headers, data=json.dumps(payload))
-
-                print("Response status code:", response.status_code)  # Debugging
+                response = get_from_ai(st.secrets["prompt_add"], need_json, plan_json)
 
                 # Convert raw response to a dict
                 response_json = response.json()
@@ -297,11 +301,12 @@ else:
                             objetivo_desempeno,
                             contenidos_especificos,
                             skills,
+                            keywords,
                             modalidad_sugerida,
                             audiencia,
                             prioridad
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             item.get("Gerencia"),
@@ -312,6 +317,7 @@ else:
                             item.get("Objetivo de desempeño"),
                             item.get("Contenidos específicos"),
                             item.get("Skills"),
+                            item.get("Keywords"),
                             item.get("Modalidad sugerida"),
                             item.get("Audiencia"),
                             item.get("Prioridad")
