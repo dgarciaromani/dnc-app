@@ -40,12 +40,7 @@ def create_donut_chart(data, title, color_scheme='category20'):
 
     pie = base.mark_arc(innerRadius=20, outerRadius=80)
 
-    text = base.mark_text(radius=50, size=12).encode(
-        text="percentage:Q",
-        color=alt.value("white")
-    )
-
-    return (pie + text).properties(
+    return pie.properties(
         title=title,
         width=400,
         height=400

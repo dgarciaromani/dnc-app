@@ -290,36 +290,43 @@ def get_virtual_courses():
 def add_linkedin_course(selection, plan_id):
     conn = get_connection()
     cur = conn.cursor()
+
+    # First, remove any existing LinkedIn course associations for this plan
+    cur.execute("DELETE FROM plan_linkedin_courses WHERE plan_id = ?", (int(plan_id),))
+
+    # Insert the LinkedIn course if it doesn't exist
     cur.execute("""
         INSERT OR IGNORE INTO linkedin_courses (
-                linkedin_urn, 
-                linkedin_course, 
+                linkedin_urn,
+                linkedin_course,
                 linkedin_url)
         VALUES (?, ?, ?)
-    """, 
-    (selection['URN'], 
-     selection['Title'], 
+    """,
+    (selection['URN'],
+     selection['Title'],
      selection['URL'])
     )
 
     conn.commit()
 
+    # Get the course ID
     cur.execute("""
-        SELECT id FROM linkedin_courses 
+        SELECT id FROM linkedin_courses
         WHERE linkedin_urn = ? AND linkedin_course = ? AND linkedin_url = ?
-    """, 
-    (selection['URN'], 
-     selection['Title'], 
+    """,
+    (selection['URN'],
+     selection['Title'],
      selection['URL']))
-    
+
     course_id = cur.fetchone()["id"]
-    
+
+    # Insert the association (this will now be the only one for this plan)
     cur.execute("""
         INSERT INTO plan_linkedin_courses (
                 plan_id,
                 course_id)
         VALUES (?, ?)
-    """, 
+    """,
     (int(plan_id),
      course_id)
     )

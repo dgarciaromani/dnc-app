@@ -13,15 +13,12 @@ df = pd.DataFrame(linkedin_courses)
 # Display only if there is data
 if not df.empty:
     # Add some summary statistics
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
-        st.metric("Total de Cursos", len(df))
+        st.metric("🎓 Total de Cursos LinkedIn", len(df), border=True)
     with col2:
         total_associations = df["Número de Actividades Asociadas"].sum()
-        st.metric("Total de Asociaciones", int(total_associations))
-    with col3:
-        courses_with_associations = len(df[df["Número de Actividades Asociadas"] > 0])
-        st.metric("Cursos Asociados", courses_with_associations)
+        st.metric("🎯 Total de Asociaciones LinkedIn - Plan", int(total_associations), border=True)
 
     st.markdown("---")
 

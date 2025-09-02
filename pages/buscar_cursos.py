@@ -81,61 +81,68 @@ else:
         st.session_state.show_recommendations_button = True
 
     if st.session_state.show_recommendations_button:
-            if st.button("Recomiéndame con IA!"):
-                if st.session_state.total_linkedin > 500:
-                    st.warning("Hay demasiados resultados para procesar. Por favor, ajusta tus criterios de búsqueda o selecciona aquellos resultados que te interesen.")
+        if st.session_state.total_linkedin > 500:
+            st.info("Hay demasiados resultados, por lo que te recomendamos seleccionar aquellos resultados que te interesen antes de hacer clic en el botón 'Recomiéndame con IA!'.")
+        
+        if st.button("Recomiéndame con IA!"):
+            # Check if user has selected specific courses
+            has_selection = len(linkedin_results.selection["rows"]) > 0
 
-                else:
-                    with st.spinner("Analizando recomendaciones con IA... Por favor espera ⏳"):
-                                
-                        # Prepare contents for AI
-                        prompt = st.secrets["prompt_linkedin"]
+            if st.session_state.total_linkedin > 500 and not has_selection:
+                st.warning("Hay demasiados resultados para procesar. Por favor, ajusta tus criterios de búsqueda o selecciona aquellos resultados que te interesen.")
+            elif st.session_state.total_linkedin > 500 and has_selection and len(linkedin_results.selection["rows"]) > 500:
+                st.warning("Has seleccionado demasiados cursos para procesar. Por favor, desselecciona algunos cursos e intenta nuevamente.")
+            else:
+                with st.spinner("Analizando recomendaciones con IA... Por favor espera ⏳"):
+                            
+                    # Prepare contents for AI
+                    prompt = st.secrets["prompt_linkedin"]
 
-                        filtered_courses = []
+                    filtered_courses = []
 
-                        if len(linkedin_results.selection["rows"]) == 0:
-                            # Reduce the size of the data sent to IA by iterating over all_courses and selecting only the relevant rows for each dict
-                            filtered_courses = [
-                                {
-                                    "Title": course.get("Title"),
-                                    "Description": course.get("Description")
-                                }
-                                for course in st.session_state.all_courses
-                            ]
-                        else:
-                            filtered_courses = [
-                                {
-                                    "Title": course.get("Title"),
-                                    "Description": course.get("Description")
-                                }
-                                for course in st.session_state.all_courses
-                                if st.session_state.all_courses.index(course) in linkedin_results.selection["rows"]
-                            ]
+                    if len(linkedin_results.selection["rows"]) == 0:
+                        # Reduce the size of the data sent to IA by iterating over all_courses and selecting only the relevant rows for each dict
+                        filtered_courses = [
+                            {
+                                "Title": course.get("Title"),
+                                "Description": course.get("Description")
+                            }
+                            for course in st.session_state.all_courses
+                        ]
+                    else:
+                        filtered_courses = [
+                            {
+                                "Title": course.get("Title"),
+                                "Description": course.get("Description")
+                            }
+                            for course in st.session_state.all_courses
+                            if st.session_state.all_courses.index(course) in linkedin_results.selection["rows"]
+                        ]
 
-                        contents = [json.dumps(filtered_courses, ensure_ascii=False), json.dumps(st.session_state.selected_row.to_dict(), ensure_ascii=False)]
+                    contents = [json.dumps(filtered_courses, ensure_ascii=False), json.dumps(st.session_state.selected_row.to_dict(), ensure_ascii=False)]
 
-                        # Get recommendations from AI
-                        recommendations_response = get_from_ai(prompt, contents)
-                        st.session_state.recommendations = process_response(recommendations_response)
+                    # Get recommendations from AI
+                    recommendations_response = get_from_ai(prompt, contents)
+                    st.session_state.recommendations = process_response(recommendations_response)
 
     if st.session_state.recommendations:
-            # Convert to DataFrame and display in Streamlit
-            st.success(f"Hay {len(st.session_state.recommendations)} curso(s) recomendado(s).")
-            preliminary_df = pd.DataFrame(st.session_state.recommendations)
-            preliminary_df["Title"] = preliminary_df["Title"].str.strip()
-            recommendations_df = pd.merge(preliminary_df, courses_df, on="Title", how="left")
-            ia_results = st.dataframe(
-                recommendations_df, 
-                use_container_width=True, 
-                hide_index=True, 
-                on_select="rerun", 
-                selection_mode="single-row")
-            
-            if len(ia_results.selection["rows"]) > 0:
-                if st.button("Agregar a Plan de Formación"):
-                    selection = recommendations_df.iloc[ia_results.selection["rows"][0]]
-                    add_linkedin_course(selection, st.session_state.selected_row['id'])
-                    st.success(f"El curso '{selection['Title']}' ha sido agregado al plan de formación.")
-                    time.sleep(5)
-                    st.session_state.clear()
-                    st.rerun()
+        # Convert to DataFrame and display in Streamlit
+        st.success(f"Hay {len(st.session_state.recommendations)} curso(s) recomendado(s).")
+        preliminary_df = pd.DataFrame(st.session_state.recommendations)
+        preliminary_df["Title"] = preliminary_df["Title"].str.strip()
+        recommendations_df = pd.merge(preliminary_df, courses_df, on="Title", how="left")
+        ia_results = st.dataframe(
+            recommendations_df, 
+            use_container_width=True, 
+            hide_index=True, 
+            on_select="rerun", 
+            selection_mode="single-row")
+        
+        if len(ia_results.selection["rows"]) > 0:
+            if st.button("Agregar a Plan de Formación"):
+                selection = recommendations_df.iloc[ia_results.selection["rows"][0]]
+                add_linkedin_course(selection, st.session_state.selected_row['id'])
+                st.success(f"El curso '{selection['Title']}' ha sido agregado al plan de formación.")
+                time.sleep(5)
+                st.session_state.clear()
+                st.rerun()
