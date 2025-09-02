@@ -1,31 +1,14 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
+from utils.database_utils import get_raw_data_forms
 
 # Make page use full width
 st.set_page_config(layout="wide")
-
-conn = sqlite3.connect("database.db", check_same_thread=False)
-c = conn.cursor()
-
 st.title("Respuestas del Cuestionario (datos no procesados)")
 
 # Load data
-df = pd.read_sql_query("""
-SELECT 
-    r.nombre AS Levantado_por,
-    d.desafio AS Desafío_Estratégico,
-    d.cambios AS Qué_Debe_Ocurrir,
-    d.que_falta AS Qué_Falta,
-    d.aprendizajes as Aprendizajes,
-    d.audiencia AS Audiencia,
-    d.fuente AS Fuente,
-    d.prioridad AS Prioridad,         
-    d.created_at AS Fecha_Creación
-FROM respondents r
-    JOIN raw_data_forms d ON r.id = d.submission_id
-ORDER BY r.created_at DESC
-""", conn)
+data = get_raw_data_forms()
+df = pd.DataFrame(data)
 
 # Display only if there is data
 if not df.empty:
