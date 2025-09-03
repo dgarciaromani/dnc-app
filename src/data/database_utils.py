@@ -1,7 +1,7 @@
 import requests
 import shutil
 import sqlite3
-from utils.template_desplegables import template
+from src.data import template_desplegables
 
 DB_PATH = "database.db"
 
@@ -18,7 +18,7 @@ def fill_database_from_template():
     cur = conn.cursor()
 
     try:
-        for table, values in template.items():
+        for table, values in template_desplegables.template.items():
             for item in values:
                 cur.execute(f"""INSERT OR IGNORE INTO {table} (name) VALUES (?)""", (item,))
         conn.commit()

@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils.database_utils import get_linkedin_courses
+from src.data.database_utils import get_linkedin_courses
 
 # Authentication check
 if not st.session_state.get("authenticated", False):

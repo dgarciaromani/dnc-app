@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 import json
 import time
-from utils.database_utils import get_virtual_courses, add_linkedin_course
-from utils.linkedin_form import get_search_details
-from utils.bedrock_api import get_from_ai, process_response
+from src.data.database_utils import get_virtual_courses, add_linkedin_course
+from src.forms.linkedin_form import get_search_details
+from src.services.bedrock_api import get_from_ai, process_response
 
 # Authentication check
 if not st.session_state.get("authenticated", False):

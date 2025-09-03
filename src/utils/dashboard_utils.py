@@ -1,6 +1,6 @@
 import pandas as pd
 import altair as alt
-from utils.database_utils import get_connection
+from src.data.database_utils import get_connection
 
 def create_donut_chart(data, title, color_scheme='category20'):
     """Create a donut chart with percentages"""

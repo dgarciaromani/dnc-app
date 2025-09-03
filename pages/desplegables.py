@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import time
-from utils import template_desplegables
-from utils.database_utils import fetch_all, edit_options, add_option, delete_option
+from src.data import template_desplegables
+from src.data.database_utils import fetch_all, edit_options, add_option, delete_option
 
 # Authentication check
 if not st.session_state.get("authenticated", False):

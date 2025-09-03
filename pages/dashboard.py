@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-from utils.database_utils import get_respondents, get_raw_data_forms, fetch_plan, get_linkedin_courses
-from utils.dashboard_utils import create_donut_chart, get_dashboard_data
+from src.data.database_utils import get_respondents, get_raw_data_forms, fetch_plan, get_linkedin_courses
+from src.utils.dashboard_utils import create_donut_chart, get_dashboard_data
 
 # Authentication check
 if not st.session_state.get("authenticated", False):

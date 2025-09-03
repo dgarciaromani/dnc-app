@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.database_utils import fetch_all
+from src.data.database_utils import fetch_all
 
 # Lookup values
 gerencias_dict = fetch_all("gerencias")

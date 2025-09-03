@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils.linkedin_api import fetch_courses
+from src.services.linkedin_api import fetch_courses
 
 def get_search_details(df):
     # Instructions box

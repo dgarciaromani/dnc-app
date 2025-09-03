@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 import json
-from utils.dnc_form import get_identification_data, get_form_data
-from utils.database_utils import fetch_all, update_respondents, update_raw_data_forms, insert_row_into_plan
-from utils.bedrock_api import get_from_ai, process_response
+from src.forms.dnc_form import get_identification_data, get_form_data
+from src.data.database_utils import fetch_all, update_respondents, update_raw_data_forms, insert_row_into_plan
+from src.services.bedrock_api import get_from_ai, process_response
 
 # Authentication check
 if not st.session_state.get("authenticated", False):

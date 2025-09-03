@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import time
 import datetime
-from utils.database_utils import download_demo_db, fetch_plan, update_final_plan, update_plan_linkedin_courses
-from utils.edit_plan_form import get_row_data, validate_form_info, has_data_changed, get_id_from_name, gerencias, subgerencias, areas, desafios, audiencias, modalidades, fuentes, prioridades
+from src.data.database_utils import download_demo_db, fetch_plan, update_final_plan, update_plan_linkedin_courses
+from src.forms.edit_plan_form import get_row_data, validate_form_info, has_data_changed, get_id_from_name, gerencias, subgerencias, areas, desafios, audiencias, modalidades, fuentes, prioridades
 
 # Authentication check
 if not st.session_state.get("authenticated", False):

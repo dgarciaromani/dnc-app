@@ -1,7 +1,7 @@
 import streamlit as st
 import os
-from utils.database_utils import fill_database_from_template
-from utils.authentication import hide_sidebar, authenticate_user, logout
+from src.data.database_utils import fill_database_from_template
+from src.auth.authentication import hide_sidebar, authenticate_user, logout
 
 # Database initialization
 if not os.path.exists("database.db"):

@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils.database_utils import get_respondents
+from src.data.database_utils import get_respondents
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
