@@ -1,14 +1,13 @@
 import streamlit as st
+import pandas as pd
+import time
+from utils import template_desplegables
+from utils.database_utils import fetch_all, edit_options, add_option, delete_option
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
     st.error("❌ Acceso no autorizado. Por favor, inicie sesión.")
     st.stop()
-
-import pandas as pd
-import time
-from utils import template_desplegables
-from utils.database_utils import fetch_all, edit_options, add_option, delete_option
 
 # Initialize session state for data refresh tracking
 if 'data_refresh_counter' not in st.session_state:

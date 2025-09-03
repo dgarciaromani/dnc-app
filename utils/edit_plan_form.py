@@ -225,9 +225,3 @@ def has_data_changed(original_row, new_form_data):
             return True
 
     return False
-    
-
-    
-
-    
-
