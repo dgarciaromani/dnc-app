@@ -5,6 +5,11 @@ import datetime
 from utils.database_utils import download_demo_db, fetch_plan, update_final_plan, update_plan_linkedin_courses
 from utils.edit_plan_form import get_row_data, validate_form_info, has_data_changed, get_id_from_name, gerencias, subgerencias, areas, desafios, audiencias, modalidades, fuentes, prioridades
 
+# Authentication check
+if not st.session_state.get("authenticated", False):
+    st.error("❌ Acceso no autorizado. Por favor, inicie sesión.")
+    st.stop()
+
 # Initialize session state
 if "edit_plan" not in st.session_state:
     st.session_state.edit_plan = False

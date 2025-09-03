@@ -4,3 +4,4 @@ database.db
 *.pyc
 __pycache__/
 utils/__pycache__/
+README.md

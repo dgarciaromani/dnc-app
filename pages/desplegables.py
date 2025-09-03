@@ -1,4 +1,10 @@
 import streamlit as st
+
+# Authentication check
+if not st.session_state.get("authenticated", False):
+    st.error("❌ Acceso no autorizado. Por favor, inicie sesión.")
+    st.stop()
+
 import pandas as pd
 import time
 from utils import template_desplegables

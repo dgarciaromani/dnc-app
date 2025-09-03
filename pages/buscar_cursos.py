@@ -1,11 +1,15 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
 import json
 import time
 from utils.database_utils import get_virtual_courses, add_linkedin_course
 from utils.linkedin_form import get_search_details
 from utils.bedrock_api import get_from_ai, process_response
+
+# Authentication check
+if not st.session_state.get("authenticated", False):
+    st.error("❌ Acceso no autorizado. Por favor, inicie sesión.")
+    st.stop()
 
 # Make page use full width
 st.set_page_config(layout="wide")

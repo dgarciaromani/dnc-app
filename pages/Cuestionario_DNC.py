@@ -1,9 +1,16 @@
 import streamlit as st
+import pandas as pd
 import re
 import json
+import os
 from utils.dnc_form import get_identification_data, get_form_data
 from utils.database_utils import fetch_all, update_respondents, update_raw_data_forms, insert_row_into_plan
 from utils.bedrock_api import get_from_ai, process_response
+
+# Authentication check
+if not st.session_state.get("authenticated", False):
+    st.error("❌ Acceso no autorizado. Por favor, inicie sesión.")
+    st.stop()
 
 # Global variables
 MAXNEEDS = 5
@@ -61,11 +68,13 @@ if not st.session_state.basic_info_saved:
 
 # Step 2: Needs form
 else:
-    # New user button
-    with st.expander(f"Guardando información como {st.session_state.basic_info['name']}. Para un nuevo usuario, haz clic aquí"):
-        if st.button("Nuevo usuario/formulario"):
-            st.session_state.clear()
-            st.rerun()
+    # New user button - only show for admin users
+    user_role = st.session_state.get("role", "user")
+    if user_role == "admin":
+        with st.expander(f"Guardando información como {st.session_state.basic_info['name']}. Para un nuevo usuario, haz clic aquí"):
+            if st.button("Nuevo usuario/formulario"):
+                st.session_state.clear()
+                st.rerun()
 
     # Display needs list if it exists
     if len(st.session_state.needs_list) > 0:

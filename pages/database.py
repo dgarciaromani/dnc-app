@@ -1,7 +1,12 @@
 import streamlit as st
-import sqlite3
 import pandas as pd
+import sqlite3
 import time
+
+# Authentication check
+if not st.session_state.get("authenticated", False):
+    st.error("❌ Acceso no autorizado. Por favor, inicie sesión.")
+    st.stop()
 
 # Make page use full width
 st.set_page_config(layout="wide")
@@ -38,7 +43,6 @@ with st.expander("Limpiar base de datos"):
             cursor.execute(f"DELETE FROM sqlite_sequence WHERE name='{table}';") # reset autoincrement
         conn.commit()
         st.success("Base de datos reiniciada.")
-        st.session_state.clear()
         time.sleep(3)
         st.rerun()
 
