@@ -29,6 +29,17 @@ def show_filters(df):
         )
         st.session_state.filters["Audiencia"] = selected_audiencias
 
+        # Asociaciones filter
+        asociaciones = ["Con cursos asociados", "Sin cursos asociados"]
+        selected_asociaciones = st.multiselect(
+            "Asociaciones",
+            options=asociaciones,
+            default=st.session_state.filters.get("Asociaciones", []),
+            placeholder="Elige un Estado",
+            key="asociacion_filter"
+        )
+        st.session_state.filters["Asociaciones"] = selected_asociaciones
+
     with col2:
         # Subgerencia filter
         subgerencias = sorted(df["Subgerencia"].dropna().unique())

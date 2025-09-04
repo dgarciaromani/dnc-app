@@ -44,7 +44,21 @@ with tab1:
         # Apply each filter if selections exist
         for column, selected_values in st.session_state.filters.items():
             if selected_values:  # Only filter if values are selected
-                filtered_df = filtered_df[filtered_df[column].isin(selected_values)]
+                if column == "Asociaciones":
+                    # Special handling for Asociaciones filter
+                    linkedin_col = "Curso Sugerido LinkedIn"
+                    if "Con cursos asociados" in selected_values and "Sin cursos asociados" in selected_values:
+                        # Both selected - show all rows
+                        pass
+                    elif "Con cursos asociados" in selected_values:
+                        # Only show rows with LinkedIn courses
+                        filtered_df = filtered_df[filtered_df[linkedin_col].notna() & (filtered_df[linkedin_col] != "")]
+                    elif "Sin cursos asociados" in selected_values:
+                        # Only show rows without LinkedIn courses
+                        filtered_df = filtered_df[filtered_df[linkedin_col].isna() | (filtered_df[linkedin_col] == "")]
+                else:
+                    # Normal filter logic for other columns
+                    filtered_df = filtered_df[filtered_df[column].isin(selected_values)]
 
         # Display filtered dataframe
         if not filtered_df.empty:
