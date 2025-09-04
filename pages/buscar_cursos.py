@@ -5,6 +5,7 @@ import time
 from src.data.database_utils import get_virtual_courses, add_linkedin_course
 from src.forms.linkedin_form import get_search_details
 from src.services.bedrock_api import get_from_ai, process_response
+from src.auth.authentication import stay_authenticated
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -57,10 +58,17 @@ if st.session_state.selected_row is None or st.session_state.linkedin_results_fa
 else:
     # Reset all
     if st.button("Reiniciar búsqueda"):
+        user_data = {
+                    "name": st.session_state.name,
+                    "role": st.session_state.role,
+                    "username": st.session_state.username
+                }
         st.session_state.clear()
+        stay_authenticated(user_data["name"], user_data["role"], user_data["username"])
         st.rerun()
 
     with st.expander(f"Mostrando resultados para: '{st.session_state.selected_row['Actividad Formativa']}' (ver más información)"):
+        st.text(f"Gerencia: '{st.session_state.selected_row['Gerencia']}'")
         st.text(f"Objetivo de desempeño: '{st.session_state.selected_row['Objetivo Desempeño']}'")
         st.text(f"Contenidos: '{st.session_state.selected_row['Contenidos']}'")
         st.text(f"Skills: '{st.session_state.selected_row['Skills']}'")
@@ -148,5 +156,11 @@ else:
                 add_linkedin_course(selection, st.session_state.selected_row['id'])
                 st.success(f"El curso '{selection['Title']}' ha sido agregado al plan de formación.")
                 time.sleep(5)
+                user_data = {
+                    "name": st.session_state.name,
+                    "role": st.session_state.role,
+                    "username": st.session_state.username
+                }
                 st.session_state.clear()
+                stay_authenticated(user_data["name"], user_data["role"], user_data["username"])
                 st.rerun()

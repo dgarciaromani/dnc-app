@@ -4,6 +4,7 @@ import json
 from src.forms.dnc_form import get_identification_data, get_form_data
 from src.data.database_utils import fetch_all, update_respondents, update_raw_data_forms, insert_row_into_plan
 from src.services.bedrock_api import get_from_ai, process_response
+from src.auth.authentication import stay_authenticated
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -71,7 +72,13 @@ else:
     if user_role == "admin":
         with st.expander(f"Guardando información como {st.session_state.basic_info['name']}. Para un nuevo usuario, haz clic aquí"):
             if st.button("Nuevo usuario/formulario"):
+                user_data = {
+                    "name": st.session_state.name,
+                    "role": st.session_state.role,
+                    "username": st.session_state.username
+                }
                 st.session_state.clear()
+                stay_authenticated(user_data["name"], user_data["role"], user_data["username"])
                 st.rerun()
 
     # Display needs list if it exists
@@ -104,6 +111,7 @@ else:
 
                     update_raw_data_forms(
                         st.session_state.submission_id,
+                        "DNC",
                         st.session_state.basic_info["gerencia"],
                         st.session_state.basic_info["subgerencia"],
                         st.session_state.basic_info["area"],
@@ -155,6 +163,7 @@ else:
                     for item in processed_response:
                         insert_row_into_plan(
                             item, 
+                            "DNC",
                             st.session_state.basic_info["gerencia"],
                             st.session_state.basic_info["subgerencia"],
                             st.session_state.basic_info["area"],

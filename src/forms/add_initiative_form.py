@@ -236,6 +236,7 @@ def save_new_initiative(form_data):
         # Insert into database
         insert_row_into_plan(
             data=initiative_data,
+            origin="DNC",
             gerencia_id=gerencia_id,
             subgerencia_id=subgerencia_id,
             area_id=area_id,

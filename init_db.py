@@ -73,6 +73,17 @@ CREATE TABLE IF NOT EXISTS prioridades (
 """)
 
 # =========================
+# Special tables
+# =========================
+
+c.execute("""
+CREATE TABLE IF NOT EXISTS origin (
+    id INTEGER PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL
+)
+""")
+
+# =========================
 # Main tables
 # =========================
 
@@ -90,6 +101,7 @@ c.execute("""
 CREATE TABLE IF NOT EXISTS raw_data_forms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     submission_id INTEGER NOT NULL,
+    origin_id INTEGER,
     gerencia_id INTEGER,
     subgerencia_id INTEGER,
     area_id INTEGER,
@@ -104,6 +116,7 @@ CREATE TABLE IF NOT EXISTS raw_data_forms (
     prioridad_id INTEGER,         
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (submission_id) REFERENCES respondents(id),
+    FOREIGN KEY (origin_id) REFERENCES origin(id),
     FOREIGN KEY (gerencia_id) REFERENCES gerencias(id),
     FOREIGN KEY (subgerencia_id) REFERENCES subgerencias(id),
     FOREIGN KEY (area_id) REFERENCES areas(id),
@@ -118,6 +131,7 @@ CREATE TABLE IF NOT EXISTS raw_data_forms (
 c.execute("""
 CREATE TABLE IF NOT EXISTS final_plan (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    origin_id INTEGER,
     gerencia_id INTEGER,
     subgerencia_id INTEGER,
     area_id INTEGER,
@@ -134,6 +148,7 @@ CREATE TABLE IF NOT EXISTS final_plan (
     prioridad_id INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
+    FOREIGN KEY (origin_id) REFERENCES origin(id),
     FOREIGN KEY (gerencia_id) REFERENCES gerencias(id),
     FOREIGN KEY (subgerencia_id) REFERENCES subgerencias(id),
     FOREIGN KEY (area_id) REFERENCES areas(id),

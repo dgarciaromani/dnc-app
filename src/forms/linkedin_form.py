@@ -19,7 +19,7 @@ def get_search_details(df):
                 help="Indica si el curso ya ha sido sugerido (✅) o si está pendiente de sugerencia (🔍).",
             )
         },
-        column_order=["Estado Curso", "Actividad Formativa", "Objetivo Desempeño", "Contenidos", "Skills", "Keywords", "Audiencia", "Prioridad"],
+        column_order=["Estado Curso", "Gerencia", "Actividad Formativa", "Objetivo Desempeño", "Contenidos", "Skills", "Keywords", "Audiencia", "Prioridad"],
         use_container_width=True, 
         hide_index=True, 
         key="data", 

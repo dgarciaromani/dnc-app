@@ -77,5 +77,9 @@ template = {
         "Alta",
         "Media",
         "Baja"
+    ],
+    "origin": [
+        "DNC",
+        "SGD"
     ]
 }

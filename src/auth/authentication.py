@@ -39,3 +39,11 @@ def hide_sidebar():
         }
     </style>
     """, unsafe_allow_html=True)
+
+
+def stay_authenticated(username, role, name):
+    st.session_state.authenticated = True
+    st.session_state.username = username
+    st.session_state.role = role
+    st.session_state.name = name
+    return

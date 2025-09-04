@@ -44,6 +44,7 @@ def fetch_plan():
     query = """
     SELECT 
         fp.id, 
+        o.name AS "Origen",
         g.name AS "Gerencia", 
         sg.name AS "Subgerencia",
         a.name AS "Área", 
@@ -61,6 +62,7 @@ def fetch_plan():
         fp.created_at AS "Fecha Creación",
         GROUP_CONCAT(lc.linkedin_course, ', ') AS "Curso Sugerido LinkedIn"
     FROM final_plan fp
+    LEFT JOIN origin o ON fp.origin_id = o.id
     LEFT JOIN gerencias g ON fp.gerencia_id = g.id
     LEFT JOIN subgerencias sg ON fp.subgerencia_id = sg.id
     LEFT JOIN areas a ON fp.area_id = a.id
@@ -213,16 +215,19 @@ def update_respondents(name, email):
     return cur.lastrowid
 
 
-def update_raw_data_forms(submission_id, gerencia_id, subgerencia_id, area_id, desafio_id, cambios, que_falta, aprendizajes, audiencia_id, modalidad_id, fuente_id, fuente_interna, prioridad_id):
+def update_raw_data_forms(submission_id, origin, gerencia_id, subgerencia_id, area_id, desafio_id, cambios, que_falta, aprendizajes, audiencia_id, modalidad_id, fuente_id, fuente_interna, prioridad_id):
     conn = get_connection()
     cur = conn.cursor()
+    cur.execute("SELECT id FROM origin WHERE name = ?", (origin,))
+    origin_id = cur.fetchone()[0]
     cur.execute(
         """
-        INSERT INTO raw_data_forms (submission_id, gerencia_id, subgerencia_id, area_id, desafio_id, cambios, que_falta, aprendizajes, audiencia_id, modalidad_id, fuente_id, fuente_interna, prioridad_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO raw_data_forms (submission_id, origin_id, gerencia_id, subgerencia_id, area_id, desafio_id, cambios, que_falta, aprendizajes, audiencia_id, modalidad_id, fuente_id, fuente_interna, prioridad_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             submission_id,
+            origin_id,
             gerencia_id,
             subgerencia_id,
             area_id,
@@ -241,12 +246,15 @@ def update_raw_data_forms(submission_id, gerencia_id, subgerencia_id, area_id, d
     conn.close()
 
 
-def insert_row_into_plan(data, gerencia_id, subgerencia_id, area_id, desafio_id, modalidad_id, audiencia_id, fuente_id, fuente_interna, prioridad_id):
+def insert_row_into_plan(data, origin, gerencia_id, subgerencia_id, area_id, desafio_id, modalidad_id, audiencia_id, fuente_id, fuente_interna, prioridad_id):
     conn = get_connection()
     cur = conn.cursor()
+    cur.execute("SELECT id FROM origin WHERE name = ?", (origin,))
+    origin_id = cur.fetchone()[0]
     cur.execute(
         """
         INSERT INTO final_plan (
+            origin_id,
             gerencia_id,
             subgerencia_id,
             area_id,
@@ -262,9 +270,10 @@ def insert_row_into_plan(data, gerencia_id, subgerencia_id, area_id, desafio_id,
             audiencia_id,
             prioridad_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
+            origin_id,
             gerencia_id, 
             subgerencia_id, 
             area_id, 
@@ -289,6 +298,7 @@ def get_virtual_courses():
     SELECT 
         fp.id AS id,
         GROUP_CONCAT(lc.linkedin_course, ', ') AS "Estado Curso",
+        g.name AS "Gerencia",
         fp.actividad_formativa AS "Actividad Formativa", 
         fp.objetivo_desempeno AS "Objetivo Desempeño", 
         fp.contenidos_especificos AS "Contenidos", 
@@ -297,6 +307,7 @@ def get_virtual_courses():
         au.name AS "Audiencia", 
         p.name AS "Prioridad"
     FROM final_plan fp
+    LEFT JOIN gerencias g ON fp.gerencia_id = g.id
     LEFT JOIN audiencias au ON fp.audiencia_id = au.id
     LEFT JOIN modalidades m ON fp.modalidad_id = m.id
     LEFT JOIN fuentes f ON fp.fuente_id = f.id
@@ -414,6 +425,7 @@ def get_linkedin_courses():
 def get_raw_data_forms():
     query = """
     SELECT
+        o.name AS "Origen",
         r.nombre AS "Levantado por",
         des.name AS "Desafío Estratégico",
         d.cambios AS "Qué Debe Ocurrir",
@@ -425,6 +437,7 @@ def get_raw_data_forms():
         d.created_at AS "Fecha Creación"
     FROM respondents r
         JOIN raw_data_forms d ON r.id = d.submission_id
+        JOIN origin o ON d.origin_id = o.id
         JOIN desafios des ON d.desafio_id = des.id
         JOIN audiencias au ON d.audiencia_id = au.id
         JOIN fuentes f ON d.fuente_id = f.id
@@ -556,133 +569,3 @@ def delete_option(selected_table, option_to_delete):
         return {"success": False, "message": f"Error en la base de datos: {str(e)}", "id": None}
     finally:
         conn.close()
-
-
-def get_dashboard_data():
-    """Get all data needed for the dashboard"""
-    conn = get_connection()
-
-    # Respondents data
-    respondents_query = """
-    SELECT
-        g.name AS gerencia,
-        COUNT(DISTINCT r.id) AS count
-    FROM respondents r
-    LEFT JOIN raw_data_forms d ON r.id = d.submission_id
-    LEFT JOIN gerencias g ON d.gerencia_id = g.id
-    WHERE g.name IS NOT NULL
-    GROUP BY g.name
-    ORDER BY count DESC
-    """
-    respondents_by_gerencia = pd.read_sql_query(respondents_query, conn)
-
-    # Needs by priority
-    priority_query = """
-    SELECT
-        p.name AS category,
-        COUNT(*) AS count
-    FROM raw_data_forms d
-    JOIN prioridades p ON d.prioridad_id = p.id
-    GROUP BY p.name
-    ORDER BY count DESC
-    """
-    needs_by_priority = pd.read_sql_query(priority_query, conn)
-
-    # Needs by audience
-    audience_query = """
-    SELECT
-        au.name AS category,
-        COUNT(*) AS count
-    FROM raw_data_forms d
-    JOIN audiencias au ON d.audiencia_id = au.id
-    GROUP BY au.name
-    ORDER BY count DESC
-    """
-    needs_by_audience = pd.read_sql_query(audience_query, conn)
-
-    # Needs by strategic challenge
-    challenge_query = """
-    SELECT
-        des.name AS category,
-        COUNT(*) AS count
-    FROM raw_data_forms d
-    JOIN desafios des ON d.desafio_id = des.id
-    GROUP BY des.name
-    ORDER BY count DESC
-    """
-    needs_by_challenge = pd.read_sql_query(challenge_query, conn)
-
-    # Training activities by modality
-    modality_query = """
-    SELECT
-        m.name AS category,
-        COUNT(*) AS count
-    FROM final_plan fp
-    JOIN modalidades m ON fp.modalidad_id = m.id
-    GROUP BY m.name
-    ORDER BY count DESC
-    """
-    activities_by_modality = pd.read_sql_query(modality_query, conn)
-
-    # Training activities by priority
-    priority_plan_query = """
-    SELECT
-        p.name AS category,
-        COUNT(*) AS count
-    FROM final_plan fp
-    JOIN prioridades p ON fp.prioridad_id = p.id
-    GROUP BY p.name
-    ORDER BY count DESC
-    """
-    activities_by_priority = pd.read_sql_query(priority_plan_query, conn)
-
-    # Training activities by audience
-    audience_plan_query = """
-    SELECT
-        au.name AS category,
-        COUNT(*) AS count
-    FROM final_plan fp
-    JOIN audiencias au ON fp.audiencia_id = au.id
-    GROUP BY au.name
-    ORDER BY count DESC
-    """
-    activities_by_audience = pd.read_sql_query(audience_plan_query, conn)
-
-    # LinkedIn courses usage
-    linkedin_query = """
-    SELECT
-        CASE
-            WHEN plc.course_id IS NOT NULL THEN 'Con Curso Asociado'
-            ELSE 'Sin Curso Asociado'
-        END AS category,
-        COUNT(*) AS count
-    FROM final_plan fp
-    LEFT JOIN plan_linkedin_courses plc ON fp.id = plc.plan_id
-    GROUP BY category
-    """
-    linkedin_usage = pd.read_sql_query(linkedin_query, conn)
-
-    # Time-based trends
-    time_query = """
-    SELECT
-        DATE(created_at) AS date,
-        COUNT(*) AS submissions
-    FROM raw_data_forms
-    GROUP BY DATE(created_at)
-    ORDER BY date
-    """
-    time_trends = pd.read_sql_query(time_query, conn)
-
-    conn.close()
-
-    return {
-        'respondents_by_gerencia': respondents_by_gerencia,
-        'needs_by_priority': needs_by_priority,
-        'needs_by_audience': needs_by_audience,
-        'needs_by_challenge': needs_by_challenge,
-        'activities_by_modality': activities_by_modality,
-        'activities_by_priority': activities_by_priority,
-        'activities_by_audience': activities_by_audience,
-        'linkedin_usage': linkedin_usage,
-        'time_trends': time_trends
-    }
