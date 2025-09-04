@@ -40,7 +40,7 @@ if selected_table != "Selecciona una opción...":
 
         new_option = st.text_input(f"Escribe el nuevo nombre de la opción:", value="")
 
-        edit_option_button = st.form_submit_button("Editar opción")
+        edit_option_button = st.form_submit_button("Editar opción", type="primary")
 
         if edit_option_button:
             # Get the selected row indices
@@ -68,7 +68,7 @@ if selected_table != "Selecciona una opción...":
     with st.form("add_option", clear_on_submit=True):
         st.header(f"Agregar una opción a {selected_table}	")
         new_option = st.text_input(f"Agregar nueva opción a {selected_table}", value="")
-        add_option_button = st.form_submit_button("Añadir opción")
+        add_option_button = st.form_submit_button("Añadir opción", type="primary")
 
         if add_option_button:
             # Add new option to database
@@ -97,7 +97,7 @@ if selected_table != "Selecciona una opción...":
             selection_mode="single-row"
         )
 
-        delete_option_button = st.form_submit_button("Eliminar opción")
+        delete_option_button = st.form_submit_button("Eliminar opción", type="primary")
 
         if delete_option_button:
             # Get the selected row indices

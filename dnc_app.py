@@ -45,23 +45,18 @@ if not st.session_state.authenticated:
 
     # Login page content
     st.title("🔐 Módulo DNC")
-    st.markdown("### Bienvenido al Módulo DNC")
+    # Login form
+    with st.form("login_form"):
+        username = st.text_input("Usuario", placeholder="Ingrese su nombre de usuario", key="login_username")
+        password = st.text_input("Contraseña", type="password", placeholder="Ingrese su contraseña", key="login_password")
 
-    st.markdown("""
-    Por favor, inicie sesión para acceder al sistema de gestión de planes de formación.
-    """)
+        # Center the submit button
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            login_submitted = st.form_submit_button("Iniciar sesión", type="primary", use_container_width=True)
 
-    # Login form without st.form to prevent visual artifacts
-    username = st.text_input("Usuario", placeholder="Ingrese su nombre de usuario", key="login_username")
-    password = st.text_input("Contraseña", type="password", placeholder="Ingrese su contraseña", key="login_password")
-
-    # Center the login button
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        login_button = st.button("🚀 Iniciar sesión", type="primary", use_container_width=True)
-
-    # Process login when button is clicked
-    if login_button:
+    # Process login when form is submitted
+    if login_submitted:
         if username and password:
             user_info = authenticate_user(username, password)
             if user_info:

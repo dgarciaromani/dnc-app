@@ -66,7 +66,7 @@ def get_identification_data():
             format_func=lambda x: x[1]
         )
 
-        submitted_basic = st.form_submit_button("Guardar datos")
+        submitted_basic = st.form_submit_button("Guardar datos", type="primary")
 
     return submitted_basic, {
         "name": name,
@@ -84,40 +84,40 @@ def get_form_data():
         Si no sabes cómo responder alguna pregunta, revisa el signo de pregunta (?) al lado derecho de cada campo para ver un ejemplo.
         """)
         challenge, _ = st.selectbox(
-            "Desafío estratégico", 
+            "Desafío estratégico (*)", 
             [(None, "Selecciona un desafío...")] + [(id, name) for name, id in desafios_dict.items()],
             index=0,
             format_func=lambda x: x[1]
         )
         changes = st.text_area(
-            "¿Qué cosas deben ocurrir en tu gerencia/subgerencia/área/equipo para que se pueda cumplir este desafío o para mover sus indicadores?",
+            "¿Qué cosas deben ocurrir en tu gerencia/subgerencia/área/equipo para que se pueda cumplir este desafío o para mover sus indicadores? (*)",
             label_visibility="visible",
             help="Ejemplo: Para cumplir con este desafío, se deben realizar informes de calidad y auto explicativos, que ayuden a comprender bien los procesos y reducir los tiempos de análisis",
         )
         whats_missing = st.text_area(
-            "¿Qué le falta a tu equipo en términos de competencias, conocimientos y/o habilidades para cumplir este desafío? ¿Qué cosas no se hacen tan bien o podrían hacer mejor?",
+            "¿Qué le falta a tu equipo en términos de competencias, conocimientos y/o habilidades para cumplir este desafío? ¿Qué cosas no se hacen tan bien o podrían hacer mejor? (*)",
             label_visibility="visible",
             help="Ejemplo: Los informes que se hacen en el área dejan mucho que desear porque uno los lee y no se entienden, además, vienen generalmente con errores",
         )
         learnings = st.text_area(
-            "¿Cómo la capacitación podría ayudar al cumplimiento de desafío mencionado? ¿Qué debe aprender el equipo o persona(s)?",
+            "¿Cómo la capacitación podría ayudar al cumplimiento de desafío mencionado? ¿Qué debe aprender el equipo o persona(s)? (*)",
             label_visibility="visible",
             help="Ejemplo: Serviría que manejen Excel en un nivel avanzado",
         )
         audience, _ = st.selectbox(
-            "¿A quién debe ir dirigida la actividad formativa?",
+            "¿A quién debe ir dirigida la actividad formativa? (*)",
             [(None, "Selecciona una audiencia...")] + [(id, name) for name, id in audiencias_dict.items()],
             index=0, 
             format_func=lambda x: x[1]
         )
         mode, _ = st.selectbox(
-            "¿Qué modalidad debe tener la actividad formativa?",
+            "¿Qué modalidad debe tener la actividad formativa? (*)",
             [(None, "Selecciona una modalidad...")] + [(id, name) for name, id in modalidades_dict.items()],
             index=0,
             format_func=lambda x: x[1]
         )
         source, _ = st.selectbox(
-            "De acuerdo a lo que comentaste que el equipo debe aprender, ¿es un conocimiento que está dentro de la organización o debe ser impartido por una persona externa a la compañía?",
+            "De acuerdo a lo que comentaste que el equipo debe aprender, ¿es un conocimiento que está dentro de la organización o debe ser impartido por una persona externa a la compañía? (*)",
             [(None, "Selecciona una fuente...")] + [(id, name) for name, id in fuentes_dict.items()],
             index=0,
             format_func=lambda x: x[1]
@@ -129,7 +129,7 @@ def get_form_data():
             key="internal_source"
         )
         priority, _ = st.selectbox(
-            "Prioriza estas en función de la urgencia/importancia para el logro de los desafíos y/o posibilidad de la ejecución de la actividad formativa según los tiempos del equipo",
+            "Prioriza estas en función de la urgencia/importancia para el logro de los desafíos y/o posibilidad de la ejecución de la actividad formativa según los tiempos del equipo (*)",
             [(None, "Selecciona una prioridad...")] + [(id, name) for name, id in prioridades_dict.items()],
             index=0,
             format_func=lambda x: x[1]

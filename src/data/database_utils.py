@@ -153,6 +153,34 @@ def update_plan_linkedin_courses(plan_id, linkedin_course_name):
     conn.close()
 
 
+def delete_plan_entry(plan_id):
+    """Delete a plan entry and its related LinkedIn courses"""
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("SELECT plan_id FROM plan_linkedin_courses WHERE plan_id = ?", (plan_id,))
+        relationships_found = cur.fetchone()
+
+        if relationships_found:
+            # First delete the LinkedIn course relationships
+            cur.execute("DELETE FROM plan_linkedin_courses WHERE plan_id = ?", (plan_id,))
+
+        # Then delete the plan entry
+        cur.execute("DELETE FROM final_plan WHERE id = ?", (plan_id,))
+
+        conn.commit()
+
+        # Return True if the main plan entry was deleted (regardless of LinkedIn courses)
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
+
+
 def fetch_all(table):
     """Fetch all rows from a table as a dict {'name': id}"""
     conn = get_connection()
