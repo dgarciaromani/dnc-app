@@ -569,3 +569,5 @@ def delete_option(selected_table, option_to_delete):
         return {"success": False, "message": f"Error en la base de datos: {str(e)}", "id": None}
     finally:
         conn.close()
+
+
