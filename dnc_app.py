@@ -109,7 +109,7 @@ if user_role == "admin":
     nav = st.navigation({
         "Home:": [dashboard],
         "Plan de Formación:": [plans],
-        "Agregar necesidades:": [dnc],
+        "Levantar necesidades:": [dnc],
         "Cursos en LinkedIn:": [linkedin_courses, search_course],
         "Administración:": [respondents, responses, desplegables, database],
     })

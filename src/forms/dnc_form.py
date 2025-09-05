@@ -90,7 +90,7 @@ def get_form_data():
             format_func=lambda x: x[1]
         )
         changes = st.text_area(
-            "¿Qué cosas deben ocurrir en tu gerencia/subgerencia/área/equipo para que se pueda cumplir este desafío o para mover sus indicadores? (*)",
+            "¿Qué cosas deben ocurrir en tu subgerencia/área/equipo para que se pueda cumplir este desafío o para mover sus indicadores? (*)",
             label_visibility="visible",
             help="Ejemplo: Para cumplir con este desafío, se deben realizar informes de calidad y auto explicativos, que ayuden a comprender bien los procesos y reducir los tiempos de análisis",
         )

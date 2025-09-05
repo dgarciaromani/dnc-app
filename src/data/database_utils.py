@@ -571,3 +571,184 @@ def delete_option(selected_table, option_to_delete):
         conn.close()
 
 
+def get_plan_metrics(origin_filter=None, gerencia_filter=None, subgerencia_filter=None,
+                     area_filter=None, desafio_filter=None, audiencia_filter=None,
+                     modalidad_filter=None, fuente_filter=None, prioridad_filter=None,
+                     asociaciones_filter=None):
+    """Get summary metrics, optionally filtered by various criteria"""
+    conn = get_connection()
+
+    try:
+        # Build WHERE conditions for final_plan table
+        where_conditions = []
+        params = []
+
+        # Origin filter
+        if origin_filter and origin_filter != "Todos":
+            origin_id_query = "SELECT id FROM origin WHERE name = ?"
+            origin_id = conn.execute(origin_id_query, (origin_filter,)).fetchone()
+            if origin_id:
+                where_conditions.append("fp.origin_id = ?")
+                params.append(origin_id[0])
+            else:
+                return {"activities": 0, "linkedin": 0}
+
+        # Gerencia filter
+        if gerencia_filter:
+            gerencia_ids = []
+            for gerencia in gerencia_filter:
+                gerencia_id_query = "SELECT id FROM gerencias WHERE name = ?"
+                gerencia_id = conn.execute(gerencia_id_query, (gerencia,)).fetchone()
+                if gerencia_id:
+                    gerencia_ids.append(str(gerencia_id[0]))
+            if gerencia_ids:
+                where_conditions.append(f"fp.gerencia_id IN ({', '.join(gerencia_ids)})")
+
+        # Subgerencia filter
+        if subgerencia_filter:
+            subgerencia_ids = []
+            for subgerencia in subgerencia_filter:
+                subgerencia_id_query = "SELECT id FROM subgerencias WHERE name = ?"
+                subgerencia_id = conn.execute(subgerencia_id_query, (subgerencia,)).fetchone()
+                if subgerencia_id:
+                    subgerencia_ids.append(str(subgerencia_id[0]))
+            if subgerencia_ids:
+                where_conditions.append(f"fp.subgerencia_id IN ({', '.join(subgerencia_ids)})")
+
+        # Área filter
+        if area_filter:
+            area_ids = []
+            for area in area_filter:
+                area_id_query = "SELECT id FROM areas WHERE name = ?"
+                area_id = conn.execute(area_id_query, (area,)).fetchone()
+                if area_id:
+                    area_ids.append(str(area_id[0]))
+            if area_ids:
+                where_conditions.append(f"fp.area_id IN ({', '.join(area_ids)})")
+
+        # Desafío filter
+        if desafio_filter:
+            desafio_ids = []
+            for desafio in desafio_filter:
+                desafio_id_query = "SELECT id FROM desafios WHERE name = ?"
+                desafio_id = conn.execute(desafio_id_query, (desafio,)).fetchone()
+                if desafio_id:
+                    desafio_ids.append(str(desafio_id[0]))
+            if desafio_ids:
+                where_conditions.append(f"fp.desafio_id IN ({', '.join(desafio_ids)})")
+
+        # Audiencia filter
+        if audiencia_filter:
+            audiencia_ids = []
+            for audiencia in audiencia_filter:
+                audiencia_id_query = "SELECT id FROM audiencias WHERE name = ?"
+                audiencia_id = conn.execute(audiencia_id_query, (audiencia,)).fetchone()
+                if audiencia_id:
+                    audiencia_ids.append(str(audiencia_id[0]))
+            if audiencia_ids:
+                where_conditions.append(f"fp.audiencia_id IN ({', '.join(audiencia_ids)})")
+
+        # Modalidad filter
+        if modalidad_filter:
+            modalidad_ids = []
+            for modalidad in modalidad_filter:
+                modalidad_id_query = "SELECT id FROM modalidades WHERE name = ?"
+                modalidad_id = conn.execute(modalidad_id_query, (modalidad,)).fetchone()
+                if modalidad_id:
+                    modalidad_ids.append(str(modalidad_id[0]))
+            if modalidad_ids:
+                where_conditions.append(f"fp.modalidad_id IN ({', '.join(modalidad_ids)})")
+
+        # Fuente filter
+        if fuente_filter:
+            fuente_ids = []
+            for fuente in fuente_filter:
+                fuente_id_query = "SELECT id FROM fuentes WHERE name = ?"
+                fuente_id = conn.execute(fuente_id_query, (fuente,)).fetchone()
+                if fuente_id:
+                    fuente_ids.append(str(fuente_id[0]))
+            if fuente_ids:
+                where_conditions.append(f"fp.fuente_id IN ({', '.join(fuente_ids)})")
+
+        # Prioridad filter
+        if prioridad_filter:
+            prioridad_ids = []
+            for prioridad in prioridad_filter:
+                prioridad_id_query = "SELECT id FROM prioridades WHERE name = ?"
+                prioridad_id = conn.execute(prioridad_id_query, (prioridad,)).fetchone()
+                if prioridad_id:
+                    prioridad_ids.append(str(prioridad_id[0]))
+            if prioridad_ids:
+                where_conditions.append(f"fp.prioridad_id IN ({', '.join(prioridad_ids)})")
+
+        # Build WHERE clause
+        where_clause = " AND ".join(where_conditions) if where_conditions else ""
+
+        # Build activities query with asociaciones filter
+        activities_where = where_clause
+        if asociaciones_filter:
+            if "Con cursos asociados" in asociaciones_filter and "Sin cursos asociados" in asociaciones_filter:
+                # Both selected - no additional filter
+                pass
+            elif "Con cursos asociados" in asociaciones_filter:
+                # Only activities with LinkedIn courses
+                if activities_where:
+                    activities_where = f"{activities_where} AND fp.id IN (SELECT DISTINCT plc.plan_id FROM plan_linkedin_courses plc)"
+                else:
+                    activities_where = "fp.id IN (SELECT DISTINCT plc.plan_id FROM plan_linkedin_courses plc)"
+            elif "Sin cursos asociados" in asociaciones_filter:
+                # Only activities without LinkedIn courses
+                if activities_where:
+                    activities_where = f"{activities_where} AND fp.id NOT IN (SELECT DISTINCT plc.plan_id FROM plan_linkedin_courses plc)"
+                else:
+                    activities_where = "fp.id NOT IN (SELECT DISTINCT plc.plan_id FROM plan_linkedin_courses plc)"
+
+        if activities_where:
+            activities_query = f"SELECT COUNT(*) FROM final_plan fp WHERE {activities_where}"
+        else:
+            activities_query = "SELECT COUNT(*) FROM final_plan"
+
+        # Build LinkedIn courses query with asociaciones filter
+        if asociaciones_filter:
+            if "Con cursos asociados" in asociaciones_filter and "Sin cursos asociados" in asociaciones_filter:
+                # Both selected - no additional filter
+                linkedin_where = where_clause
+            elif "Con cursos asociados" in asociaciones_filter:
+                # Only with LinkedIn courses
+                if where_clause:
+                    linkedin_where = f"{where_clause} AND plc.course_id IS NOT NULL"
+                else:
+                    linkedin_where = "plc.course_id IS NOT NULL"
+            elif "Sin cursos asociados" in asociaciones_filter:
+                # Only without LinkedIn courses
+                if where_clause:
+                    linkedin_where = f"{where_clause} AND plc.course_id IS NULL"
+                else:
+                    linkedin_where = "plc.course_id IS NULL"
+            else:
+                linkedin_where = where_clause
+        else:
+            linkedin_where = where_clause
+
+        if linkedin_where:
+            linkedin_query = f"""
+                SELECT COUNT(DISTINCT lc.id)
+                FROM linkedin_courses lc
+                LEFT JOIN plan_linkedin_courses plc ON lc.id = plc.course_id
+                LEFT JOIN final_plan fp ON plc.plan_id = fp.id
+                WHERE {linkedin_where}
+            """
+        else:
+            linkedin_query = "SELECT COUNT(*) FROM linkedin_courses"
+
+        # Execute queries
+        activities = conn.execute(activities_query, params).fetchone()[0] if params else conn.execute(activities_query).fetchone()[0]
+        linkedin = conn.execute(linkedin_query, params).fetchone()[0] if params and linkedin_where else conn.execute(linkedin_query).fetchone()[0]
+
+        return {
+            "activities": activities,
+            "linkedin": linkedin
+        }
+
+    finally:
+        conn.close()

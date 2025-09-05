@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
-from src.data.database_utils import download_demo_db, fetch_plan, update_final_plan, update_plan_linkedin_courses, delete_plan_entry
+from src.data.database_utils import download_demo_db, fetch_plan, update_final_plan, update_plan_linkedin_courses, delete_plan_entry, get_plan_metrics
 from src.forms.edit_plan_form import get_row_data, validate_form_info, has_data_changed, get_id_from_name, gerencias, subgerencias, areas, desafios, audiencias, modalidades, fuentes, prioridades
 from src.forms.add_initiative_form import add_initiative_form, validate_add_form_info, save_new_initiative
 from src.utils.plan_utils import show_filters, reload_data
@@ -34,6 +34,7 @@ with tab1:
 
     # Display only if there is data
     if not df.empty:
+
         # Filters section with expander
         with st.expander("🔍 Filtros", expanded=False):
             show_filters(df)
@@ -59,6 +60,33 @@ with tab1:
                 else:
                     # Normal filter logic for other columns
                     filtered_df = filtered_df[filtered_df[column].isin(selected_values)]
+
+        # Calculate metrics based on filtered data
+        current_filters = st.session_state.get("filters", {})
+        metrics = get_plan_metrics(
+            gerencia_filter=current_filters.get("Gerencia"),
+            subgerencia_filter=current_filters.get("Subgerencia"),
+            area_filter=current_filters.get("Área"),
+            desafio_filter=current_filters.get("Desafío Estratégico"),
+            audiencia_filter=current_filters.get("Audiencia"),
+            modalidad_filter=current_filters.get("Modalidad"),
+            fuente_filter=current_filters.get("Fuente"),
+            prioridad_filter=current_filters.get("Prioridad"),
+            asociaciones_filter=current_filters.get("Asociaciones")
+        )
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("🎯 Cantidad de Actividades Formativas", metrics["activities"], border=True)
+
+        with col2:
+            st.metric("🎓 Cantidad de Cursos LinkedIn", metrics["linkedin"], border=True)
+
+        with col3:
+            if metrics["activities"] > 0:
+                coverage_pct = round((metrics["linkedin"] / metrics["activities"]) * 100, 1)
+                st.metric("📈 Cobertura de Actividades Formativas", f"{coverage_pct}%", border=True)
 
         # Display filtered dataframe
         if not filtered_df.empty:
