@@ -6,6 +6,7 @@ from src.data.database_utils import get_virtual_courses, add_linkedin_course
 from src.forms.linkedin_form import get_search_details
 from src.services.bedrock_api import get_from_ai, process_response
 from src.auth.authentication import stay_authenticated
+from src.utils.buscar_utils import show_course_filters
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -52,7 +53,43 @@ if st.session_state.selected_row is None or st.session_state.linkedin_results_fa
     if df.empty:
         st.info("No hay cursos en tu plan que sean virtuales y externos.")
     else:
-        get_search_details(df)
+        # Filters section with expander
+        with st.expander("🔍 Filtros", expanded=False):
+            show_course_filters(df)
+
+        # Apply filters to dataframe
+        filtered_df = df.copy()
+
+        # Apply each filter if selections exist
+        for column, selected_values in st.session_state.get("course_filters", {}).items():
+            if selected_values:  # Only filter if values are selected
+                if column == "Estado":
+                    # Special handling for Estado filter
+                    estado_col = "Estado Curso"
+                    if "Con cursos asociados" in selected_values and "Sin cursos asociados" in selected_values:
+                        # Both selected - show all rows
+                        pass
+                    elif "Con cursos asociados" in selected_values:
+                        # Only show rows with courses
+                        filtered_df = filtered_df[filtered_df[estado_col].notna() & (filtered_df[estado_col] != "")]
+                    elif "Sin cursos asociados" in selected_values:
+                        # Only show rows without courses
+                        filtered_df = filtered_df[filtered_df[estado_col].isna() | (filtered_df[estado_col] == "")]
+                else:
+                    # Normal filter logic for other columns
+                    actual_column = column
+                    if actual_column in filtered_df.columns:
+                        filtered_df = filtered_df[filtered_df[actual_column].isin(selected_values)]
+
+        # Display filtered dataframe with record count
+        if not filtered_df.empty:
+            st.markdown(f"**Mostrando {len(filtered_df)} de {len(df)} registros**")
+            get_search_details(filtered_df)
+        else:
+            st.info("No hay registros que coincidan con los filtros seleccionados.")
+            if st.button("Mostrar todos los registros"):
+                st.session_state.course_filters = {}
+                st.rerun()
 
 # Step 2: Select a course from LinkedIn
 else:

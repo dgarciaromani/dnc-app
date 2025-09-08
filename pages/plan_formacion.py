@@ -32,6 +32,14 @@ with tab1:
     # Reload data to ensure we have the latest changes
     df = reload_data()
 
+    # Add Asociación column based on LinkedIn course presence (positioned as second column)
+    if not df.empty:
+        # Insert at specific position
+        asociacion_values = df['Curso Sugerido LinkedIn'].apply(
+            lambda x: "✅" if pd.notna(x) and x.strip() != "" else "❌"
+        )
+        df.insert(2, 'Asociación', asociacion_values)
+
     # Display only if there is data
     if not df.empty:
 
@@ -86,7 +94,7 @@ with tab1:
         with col3:
             if metrics["activities"] > 0:
                 coverage_pct = round((metrics["linkedin"] / metrics["activities"]) * 100, 1)
-                st.metric("📈 Cobertura de Actividades Formativas", f"{coverage_pct}%", border=True)
+                st.metric("📈 Asignación de Actividades Formativas a Cursos", f"{coverage_pct}%", border=True)
 
         # Display filtered dataframe
         if not filtered_df.empty:
@@ -97,6 +105,11 @@ with tab1:
                 hide_index=True,
                 column_config={
                     "id": None,  # Hide the id column
+                    "Asociación": st.column_config.TextColumn(
+                        "Asociación",
+                        help="Indica si hay un curso de LinkedIn asociado",
+                        width="small"
+                    ),
                 },
                 key="view_plan_dataframe")
         else:
