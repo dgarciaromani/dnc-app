@@ -3,3 +3,5 @@ database.db
 .streamlit/secrets.toml
 *.pyc
 __pycache__/
+utils/__pycache__/
+README.md

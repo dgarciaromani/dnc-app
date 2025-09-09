@@ -1,2 +1,15 @@
 [browser]
 gatherUsageStats = false
+
+[logger]
+
+# Level of logging: 'error', 'warning', 'info', 'debug'
+level = "info"
+
+[server]
+
+# List of folders that should not be watched for changes
+folderWatchBlacklist = ['']
+
+# Change the type of file watcher used by Streamlit, or turn it off completely
+fileWatcherType = "auto"
