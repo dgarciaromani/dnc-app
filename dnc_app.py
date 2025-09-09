@@ -93,7 +93,7 @@ with st.sidebar:
 # Define pages
 dashboard = st.Page("pages/dashboard.py", title="Dashboard", icon=":material/dashboard:")
 plans = st.Page("pages/plan_formacion.py", title="Mi Plan de Formación", icon=":material/list:")
-dnc = st.Page("pages/cuestionario_DNC.py", title="Cuestionario DNC", icon=":material/question_answer:")
+dnc = st.Page("pages/cuestionario_dnc.py", title="Cuestionario DNC", icon=":material/question_answer:")
 search_course = st.Page("pages/buscar_cursos.py", title="Buscar y Agregar Cursos LinkedIn", icon=":material/search:")
 respondents = st.Page("pages/encuestados.py", title="Encuestados", icon=":material/group:")
 responses = st.Page("pages/respuestas.py", title="Respuestas", icon=":material/feedback:")
