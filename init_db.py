@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS origin (
 """)
 
 # =========================
-# Main tables
+# Main tables - DNC
 # =========================
 
 # User information

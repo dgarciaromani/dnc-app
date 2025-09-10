@@ -72,7 +72,7 @@ def show_course_filters(df):
     # Clear filters button
     col_clear, col_space = st.columns([1, 3])
     with col_clear:
-        if st.button("🗑️ Limpiar Filtros"):
+        if st.button("🗑️ Limpiar Filtros", type="primary"):
             st.session_state.course_filters = {}
             st.rerun()
 

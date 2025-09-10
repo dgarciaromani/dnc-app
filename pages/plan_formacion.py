@@ -114,13 +114,13 @@ with tab1:
                 key="view_plan_dataframe")
         else:
             st.info("No hay registros que coincidan con los filtros seleccionados.")
-            if st.button("Mostrar todos los registros"):
+            if st.button("↩️ Mostrar todos los registros", type="primary"):
                 st.session_state.filters = {}
                 st.rerun()
     else:
         st.info("Plan no disponible. Por favor, completa el cuestionario DNC para generar un plan de formación.")
         # Add data to the plan
-        if st.button("Cargar base de datos de ejemplo"):
+        if st.button("🔄 Cargar base de datos de ejemplo", type="primary"):
             success = download_demo_db()
             if success:
                 st.success("Base de datos cargada correctamente.")
@@ -270,7 +270,7 @@ with tab4:
             st.warning("⚠️ **ATENCIÓN:** Esta acción no se puede deshacer.")
 
             # Delete confirmation
-            if st.button(f"Confirmar Eliminación de {len(selected_rows)} fila(s)"):
+            if st.button(f"🗑️ Confirmar Eliminación de {len(selected_rows)} fila(s)", type="primary"):
                 try:
                     for row in selected_rows:
                         delete_plan_entry(int(df.iloc[row]['id']))

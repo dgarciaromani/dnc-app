@@ -152,7 +152,7 @@ def get_row_data(row_data):
         )
 
         # Submit button
-        submitted = st.form_submit_button("Guardar cambios", type="primary")
+        submitted = st.form_submit_button("💾 Guardar cambios", type="primary")
 
     return submitted, {
         "gerencia": gerencia_selected,

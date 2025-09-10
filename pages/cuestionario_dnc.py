@@ -71,7 +71,7 @@ else:
     user_role = st.session_state.get("role", "user")
     if user_role == "admin":
         with st.expander(f"Guardando información como {st.session_state.basic_info['name']}. Para un nuevo usuario, haz clic aquí"):
-            if st.button("Nuevo usuario/formulario"):
+            if st.button("👤 Nuevo usuario/formulario", type="primary"):
                 user_data = {
                     "name": st.session_state.name,
                     "role": st.session_state.role,
@@ -88,7 +88,7 @@ else:
             st.markdown(f"{i+1}. Desafío: {need['challenge']}, ¿Qué le falta a tu equipo para cumplir este desafío?: {need['whats_missing']}")
 
     # Display needs form
-    st.subheader("Tus desafíos estratégicos:")
+    st.subheader("🎯 Tus desafíos estratégicos:")
     st.markdown("\n".join([f"{i+1}. {d}" for i, d in enumerate(desafios_dict.keys())]))
 
     # Check if the user has reached the maximum number of needs   

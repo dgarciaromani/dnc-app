@@ -60,7 +60,7 @@ def get_search_details(df):
     )
     level = selected_level[0]
 
-    st.button("Buscar sugerencia de curso en LinkedIn Learning", on_click=lambda: search_button(event.selection["rows"], df, asset_type, results_spanish, level, options_level))
+    st.button("🔍 Buscar sugerencia de curso en LinkedIn Learning", type="primary", on_click=lambda: search_button(event.selection["rows"], df, asset_type, results_spanish, level, options_level))
     
     if not event.selection["rows"]:
         st.warning("Por favor selecciona una fila antes de hacer clic en el botón para buscar sugerencias de cursos en LinkedIn Learning.")

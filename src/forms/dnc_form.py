@@ -15,8 +15,8 @@ prioridades_dict = fetch_all("prioridades")
 def get_identification_data():
 
     # Instructions box
+    st.subheader("📝 Instrucciones")
     st.markdown("""
-    ## Instrucciones
     Por favor, completa el cuestionario para ayudarnos a identificar las necesidades de formación en tu área. 
     Primero completa tu información básica, luego añade hasta 5 necesidades y asigna una prioridad a cada una de ellas.
     """)
@@ -66,7 +66,7 @@ def get_identification_data():
             format_func=lambda x: x[1]
         )
 
-        submitted_basic = st.form_submit_button("Guardar datos", type="primary")
+        submitted_basic = st.form_submit_button("💾 Guardar datos", type="primary")
 
     return submitted_basic, {
         "name": name,
@@ -135,10 +135,7 @@ def get_form_data():
             format_func=lambda x: x[1]
         )
         
-        add_clicked = st.form_submit_button(
-            "Guardar necesidad"
-            #disabled=(not challenge or not changes or not whats_missing or not learnings or not audience or not mode or not source or not priority)
-        )
+        add_clicked = st.form_submit_button("💾 Guardar necesidad", type="primary")
 
     return add_clicked, {
         "challenge": challenge,

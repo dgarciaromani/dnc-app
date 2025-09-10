@@ -147,7 +147,7 @@ def add_initiative_form():
         )
 
         # Submit button
-        submitted = st.form_submit_button("Agregar Iniciativa", type="primary")
+        submitted = st.form_submit_button("➕ Agregar Iniciativa", type="primary")
 
     # Prepare form data dictionary
     form_data = {

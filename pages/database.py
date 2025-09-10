@@ -37,7 +37,7 @@ else:
 with st.expander("Limpiar base de datos"):
     st.warning("Esta acción eliminará todos los datos de la base de datos. La información no se podrá recuperar una vez realizada esta acción.")
     confirm = st.checkbox("Quiero borrar todos los datos")
-    if st.button("Borrar todo") and confirm:
+    if st.button("🗑️ Borrar todo", type="primary") and confirm:
         for table in tables:
             cursor.execute(f"DELETE FROM {table};")
             cursor.execute(f"DELETE FROM sqlite_sequence WHERE name='{table}';") # reset autoincrement

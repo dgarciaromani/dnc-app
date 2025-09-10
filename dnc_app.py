@@ -84,10 +84,10 @@ st.set_page_config(
 
 # Show user info in sidebar
 with st.sidebar:
-    st.success(f"✅ Sesión iniciada como: {st.session_state.name}")
+    st.success(f"👤 Sesión iniciada como: {st.session_state.name}")
 
     # Logout button
-    if st.button("🚪 Cerrar sesión", use_container_width=True):
+    if st.button("🚪 Cerrar sesión", type="primary", use_container_width=True):
         logout()
 
 # Define pages

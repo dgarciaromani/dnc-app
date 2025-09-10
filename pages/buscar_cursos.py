@@ -87,14 +87,14 @@ if st.session_state.selected_row is None or st.session_state.linkedin_results_fa
             get_search_details(filtered_df)
         else:
             st.info("No hay registros que coincidan con los filtros seleccionados.")
-            if st.button("Mostrar todos los registros"):
+            if st.button("↩️ Mostrar todos los registros", type="primary"):
                 st.session_state.course_filters = {}
                 st.rerun()
 
 # Step 2: Select a course from LinkedIn
 else:
     # Reset all
-    if st.button("Reiniciar búsqueda"):
+    if st.button("↩️ Reiniciar búsqueda", type="primary"):
         user_data = {
                     "name": st.session_state.name,
                     "role": st.session_state.role,
@@ -133,7 +133,7 @@ else:
         if st.session_state.total_linkedin > 500:
             st.info("Hay demasiados resultados, por lo que te recomendamos seleccionar aquellos resultados que te interesen antes de hacer clic en el botón 'Recomiéndame con IA!'.")
         
-        if st.button("Recomiéndame con IA!"):
+        if st.button("✨ Recomiéndame con IA!", type="primary"):
             # Check if user has selected specific courses
             has_selection = len(linkedin_results.selection["rows"]) > 0
 
@@ -188,7 +188,7 @@ else:
             selection_mode="single-row")
         
         if len(ia_results.selection["rows"]) > 0:
-            if st.button("Agregar a Plan de Formación"):
+            if st.button("➕ Agregar a Plan de Formación", type="primary"):
                 selection = recommendations_df.iloc[ia_results.selection["rows"][0]]
                 add_linkedin_course(selection, st.session_state.selected_row['id'])
                 st.success(f"El curso '{selection['Title']}' ha sido agregado al plan de formación.")
