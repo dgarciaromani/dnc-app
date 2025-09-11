@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import json
-from src.forms.dnc_form import get_identification_data, get_form_data
+from src.forms.dnc_form import gerencias_dict, get_identification_data, get_form_data
 from src.data.database_utils import fetch_all, update_respondents, update_raw_data_forms, insert_row_into_plan
 from src.services.bedrock_api import get_from_ai, process_response
 from src.auth.authentication import stay_authenticated
@@ -13,6 +13,7 @@ if not st.session_state.get("authenticated", False):
 
 # Global variables
 MAXNEEDS = 5
+gerencias_dict = fetch_all("gerencias")
 desafios_dict = fetch_all("desafios")
 audiencias_dict = fetch_all("audiencias")
 modalidades_dict = fetch_all("modalidades")
@@ -88,7 +89,8 @@ else:
             st.markdown(f"{i+1}. Desafío: {need['challenge']}, ¿Qué le falta a tu equipo para cumplir este desafío?: {need['whats_missing']}")
 
     # Display needs form
-    st.subheader("🎯 Tus desafíos estratégicos:")
+    gerencia_name = next(name for name, id in gerencias_dict.items() if id == st.session_state.basic_info["gerencia"])
+    st.subheader(f"🎯 Desafíos estratégicos de {gerencia_name}:")
     st.markdown("\n".join([f"{i+1}. {d}" for i, d in enumerate(desafios_dict.keys())]))
 
     # Check if the user has reached the maximum number of needs   

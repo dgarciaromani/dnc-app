@@ -123,7 +123,7 @@ def get_form_data():
             format_func=lambda x: x[1]
         )
         internal_source = st.text_input(
-            "Si el conocimiento está dentro de la organización, ¿quién(es) o dónde está? (de no ser interno, dejar en blanco)", 
+            "Si el conocimiento está dentro de la organización, ¿quién(es) lo tiene o dónde está? (nombre de la persona o el documento donde se encuentra). Si no sabe, dejar en blanco.", 
             label_visibility="visible",
             help="Ejemplo: Eduardo Soto, de contabilidad; en el material del curso de certificación que realizamos el año pasado, o en el procedimiento 10.005",
             key="internal_source"

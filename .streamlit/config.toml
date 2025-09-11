@@ -3,3 +3,11 @@ gatherUsageStats = false
 
 [theme]
 base="light"
+
+[server]
+fileWatcherType = "auto"
+folderWatchBlacklist = ['__pycache__']
+
+[global]
+developmentMode = false
+showWarningOnDirectExecution = false
