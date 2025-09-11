@@ -127,9 +127,9 @@ CREATE TABLE IF NOT EXISTS raw_data_forms (
 )
 """)
 
-# Output from AI (plan)
+# Output from AI (matrix)
 c.execute("""
-CREATE TABLE IF NOT EXISTS final_plan (
+CREATE TABLE IF NOT EXISTS final_matrix (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     origin_id INTEGER,
     gerencia_id INTEGER,
@@ -170,13 +170,13 @@ CREATE TABLE IF NOT EXISTS linkedin_courses (
 )
 """)
 
-# Join table for final_plan and LinkedIn courses
+# Join table for final_matrix and LinkedIn courses
 c.execute("""
-CREATE TABLE IF NOT EXISTS plan_linkedin_courses (
-    plan_id INTEGER NOT NULL,
+CREATE TABLE IF NOT EXISTS matrix_linkedin_courses (
+    matrix_id INTEGER NOT NULL,
     course_id INTEGER NOT NULL,
-    PRIMARY KEY (plan_id, course_id),
-    FOREIGN KEY (plan_id) REFERENCES final_plan(id),
+    PRIMARY KEY (matrix_id, course_id),
+    FOREIGN KEY (matrix_id) REFERENCES final_matrix(id),
     FOREIGN KEY (course_id) REFERENCES linkedin_courses(id)
 )
 """)

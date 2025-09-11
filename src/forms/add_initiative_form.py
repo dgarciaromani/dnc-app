@@ -1,5 +1,5 @@
 import streamlit as st
-from src.data.database_utils import fetch_all, insert_row_into_plan
+from src.data.database_utils import fetch_all, insert_row_into_matrix
 
 # Fetch lookup tables from DB
 gerencias = fetch_all("gerencias")
@@ -234,7 +234,7 @@ def save_new_initiative(form_data):
         }
 
         # Insert into database
-        insert_row_into_plan(
+        insert_row_into_matrix(
             data=initiative_data,
             origin="DNC",
             gerencia_id=gerencia_id,

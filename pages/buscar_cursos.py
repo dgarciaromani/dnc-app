@@ -51,7 +51,7 @@ if st.session_state.selected_row is None or st.session_state.linkedin_results_fa
 
     # Display only if there is data
     if df.empty:
-        st.info("No hay cursos en tu plan que sean virtuales y externos.")
+        st.info("No hay cursos en tu matriz que sean virtuales y externos.")
     else:
         # Filters section with expander
         with st.expander("🔍 Filtros", expanded=False):
@@ -188,10 +188,10 @@ else:
             selection_mode="single-row")
         
         if len(ia_results.selection["rows"]) > 0:
-            if st.button("➕ Agregar a Plan de Formación", type="primary"):
+            if st.button("➕ Agregar a la Matriz de Necesidades", type="primary"):
                 selection = recommendations_df.iloc[ia_results.selection["rows"][0]]
                 add_linkedin_course(selection, st.session_state.selected_row['id'])
-                st.success(f"El curso '{selection['Title']}' ha sido agregado al plan de formación.")
+                st.success(f"El curso '{selection['Title']}' ha sido agregado a la matriz de necesidades.")
                 time.sleep(5)
                 user_data = {
                     "name": st.session_state.name,

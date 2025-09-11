@@ -84,7 +84,7 @@ try:
             if not data['activities_by_gerencia'].empty:
                 chart = create_horizontal_bar_chart(
                     data['activities_by_gerencia'],
-                    "Actividades en Plan por Gerencia",
+                    "Actividades en la Matriz de Necesidades por Gerencia",
                     'reds'
                 )
                 st.altair_chart(chart, use_container_width=True)
@@ -94,7 +94,7 @@ try:
             if not data['activities_by_area'].empty:
                 chart = create_horizontal_bar_chart(
                     data['activities_by_area'],
-                    "Actividades en Plan por Área",
+                    "Actividades en la Matriz de Necesidades por Área",
                     'greens'
                 )
                 st.altair_chart(chart, use_container_width=True)
@@ -105,7 +105,7 @@ try:
             if not data['activities_by_subgerencia'].empty:
                 chart = create_horizontal_bar_chart(
                     data['activities_by_subgerencia'],
-                    "Actividades en Plan por Subgerencia",
+                    "Actividades en la Matriz de Necesidades por Subgerencia",
                     'blues'
                 )
                 st.altair_chart(chart, use_container_width=True)

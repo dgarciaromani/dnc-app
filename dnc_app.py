@@ -92,7 +92,7 @@ with st.sidebar:
 
 # Define pages
 dashboard = st.Page("pages/dashboard.py", title="Dashboard", icon=":material/dashboard:")
-plans = st.Page("pages/plan_formacion.py", title="Mi Plan de Formación", icon=":material/list:")
+matrix = st.Page("pages/matriz_necesidades.py", title="Mi Matriz de Necesidades", icon=":material/list:")
 dnc = st.Page("pages/cuestionario_dnc.py", title="Cuestionario DNC", icon=":material/question_answer:")
 search_course = st.Page("pages/buscar_cursos.py", title="Buscar y Agregar Cursos LinkedIn", icon=":material/search:")
 respondents = st.Page("pages/encuestados.py", title="Encuestados", icon=":material/group:")
@@ -108,7 +108,7 @@ if user_role == "admin":
     # Admin sees all pages
     nav = st.navigation({
         "Home:": [dashboard],
-        "Plan de Formación:": [plans],
+        "Matriz de Necesidades:": [matrix],
         "Levantar necesidades:": [dnc],
         "Cursos en LinkedIn:": [linkedin_courses, search_course],
         "Administración:": [respondents, responses, desplegables, database],

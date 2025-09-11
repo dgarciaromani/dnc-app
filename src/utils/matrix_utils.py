@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from src.data.database_utils import fetch_plan
+from src.data.database_utils import fetch_matrix
 
 def show_filters(df):
     # Create filter columns
@@ -119,10 +119,10 @@ def show_filters(df):
 
 def reload_data():
     """
-    Reload the plan data from database and return as DataFrame
+    Reload the matrix data from database and return as DataFrame
     Returns: pandas.DataFrame - Fresh data from the database
     """
-    data = fetch_plan()
+    data = fetch_matrix()
     df = pd.DataFrame(data)
     # Ensure the dataframe has a proper integer index starting from 0
     df.reset_index(drop=True, inplace=True)

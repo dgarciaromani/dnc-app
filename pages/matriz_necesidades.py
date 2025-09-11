@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 import time
-from src.data.database_utils import download_demo_db, fetch_plan, update_final_plan, update_plan_linkedin_courses, delete_plan_entry, get_plan_metrics
-from src.forms.edit_plan_form import get_row_data, validate_form_info, has_data_changed, get_id_from_name, gerencias, subgerencias, areas, desafios, audiencias, modalidades, fuentes, prioridades
+from src.data.database_utils import download_demo_db, fetch_matrix, update_final_matrix, update_matrix_linkedin_courses, delete_matrix_entry, get_matrix_metrics
+from src.forms.edit_matrix_form import get_row_data, validate_form_info, has_data_changed, get_id_from_name, gerencias, subgerencias, areas, desafios, audiencias, modalidades, fuentes, prioridades
 from src.forms.add_initiative_form import add_initiative_form, validate_add_form_info, save_new_initiative
-from src.utils.plan_utils import show_filters, reload_data
+from src.utils.matrix_utils import show_filters, reload_data
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -15,14 +15,14 @@ if not st.session_state.get("authenticated", False):
 st.set_page_config(layout="wide")
 
 # Load data
-data = fetch_plan()
+data = fetch_matrix()
 df = pd.DataFrame(data)
 
 # Main title
-st.title("Mi Plan de Formación")
+st.title("Mi Matriz de Necesidades de Aprendizaje")
 
 # Create tabs for different functionalities
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Ver Plan", "✏️ Editar", "➕ Agregar", "🗑️ Eliminar"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Ver Matriz", "✏️ Editar", "➕ Agregar", "🗑️ Eliminar"])
 
 # Initialize session state for filters
 if "filters" not in st.session_state:
@@ -71,7 +71,7 @@ with tab1:
 
         # Calculate metrics based on filtered data
         current_filters = st.session_state.get("filters", {})
-        metrics = get_plan_metrics(
+        metrics = get_matrix_metrics(
             gerencia_filter=current_filters.get("Gerencia"),
             subgerencia_filter=current_filters.get("Subgerencia"),
             area_filter=current_filters.get("Área"),
@@ -111,23 +111,23 @@ with tab1:
                         width="small"
                     ),
                 },
-                key="view_plan_dataframe")
+                key="view_matrix_dataframe")
         else:
             st.info("No hay registros que coincidan con los filtros seleccionados.")
             if st.button("↩️ Mostrar todos los registros", type="primary"):
                 st.session_state.filters = {}
                 st.rerun()
     else:
-        st.info("Plan no disponible. Por favor, completa el cuestionario DNC para generar un plan de formación.")
-        # Add data to the plan
+        st.info("Matriz no disponible. Por favor, completa el cuestionario DNC para generar una matriz de necesidades de aprendizaje.")
+        # Add data to the matrix
         if st.button("🔄 Cargar base de datos de ejemplo", type="primary"):
-            success = download_demo_db()
+            success, message = download_demo_db()
             if success:
                 st.success("Base de datos cargada correctamente.")
                 time.sleep(3)
                 st.rerun()
             else:
-                st.error("No se pudo descargar la base de datos. Por favor, inténtalo nuevamente.")
+                st.error(f"Error al descargar la base de datos: {message}")
 
 with tab2:
     # Reload data to ensure we have the latest changes
@@ -136,7 +136,7 @@ with tab2:
     # Edit functionality
     if not df.empty:
         st.markdown("""Por favor, selecciona una fila para editar:""")
-        edited_plan = st.dataframe(
+        edited_matrix = st.dataframe(
             df,
             use_container_width=True,
             hide_index=True,
@@ -145,10 +145,10 @@ with tab2:
             },
             on_select="rerun",
             selection_mode="single-row",
-            key="edit_plan_dataframe")
+            key="edit_matrix_dataframe")
 
         # Check for row selection and display form
-        selected_rows = edited_plan.selection.get("rows", [])
+        selected_rows = edited_matrix.selection.get("rows", [])
 
         if selected_rows:
             # Get the selected row data
@@ -180,7 +180,7 @@ with tab2:
                             prioridad_id = get_id_from_name(prioridades, form_info['prioridad'])
 
                             # Update the database
-                            update_final_plan(
+                            update_final_matrix(
                                 gerencia_id=gerencia_id,
                                 subgerencia_id=subgerencia_id,
                                 area_id=area_id,
@@ -195,11 +195,11 @@ with tab2:
                                 fuente_interna=form_info['fuente_interna'],
                                 audiencia_id=audiencia_id,
                                 prioridad_id=prioridad_id,
-                                plan_id=original_row['id']
+                                matrix_id=original_row['id']
                             )
 
                             # Update LinkedIn course (always call to handle None case for deletion)
-                            update_plan_linkedin_courses(original_row['id'], form_info.get('linkedin'))
+                            update_matrix_linkedin_courses(original_row['id'], form_info.get('linkedin'))
 
                             st.success("✅ Cambios guardados correctamente.")
                             time.sleep(2)
@@ -246,7 +246,7 @@ with tab4:
     # Delete functionality
     if not df.empty:
         st.markdown("""Por favor, selecciona las filas para eliminar:""")
-        delete_plan = st.dataframe(
+        delete_matrix = st.dataframe(
             df,
             use_container_width=True,
             hide_index=True,
@@ -255,10 +255,10 @@ with tab4:
             },
             on_select="rerun",
             selection_mode="multi-row",
-            key="delete_plan_dataframe")
+            key="delete_matrix_dataframe")
 
         # Check for row selection and display delete confirmation
-        selected_rows = delete_plan.selection.get("rows", [])
+        selected_rows = delete_matrix.selection.get("rows", [])
 
         if selected_rows:
             # Get all selected row data
@@ -273,7 +273,7 @@ with tab4:
             if st.button(f"🗑️ Confirmar Eliminación de {len(selected_rows)} fila(s)", type="primary"):
                 try:
                     for row in selected_rows:
-                        delete_plan_entry(int(df.iloc[row]['id']))
+                        delete_matrix_entry(int(df.iloc[row]['id']))
                     st.success(f"✅ {len(selected_rows)} fila(s) eliminada(s) correctamente.")
                     time.sleep(2)
                     st.rerun()

@@ -23,7 +23,7 @@ if not df.empty:
         st.metric("🎓 Total de Cursos LinkedIn", len(df), border=True)
     with col2:
         total_associations = df["Número de Actividades Asociadas"].sum()
-        st.metric("🎯 Total de Asociaciones LinkedIn - Plan", int(total_associations), border=True)
+        st.metric("🎯 Total de Asociaciones LinkedIn - Matriz", int(total_associations), border=True)
 
     st.markdown("---")
 
@@ -93,6 +93,6 @@ else:
     st.markdown("""
     Los cursos de LinkedIn aparecerán aquí cuando:
     1. Se complete el Cuestionario DNC.
-    2. Se genere un Plan de Formación.
-    3. Se asocien cursos de LinkedIn a las actividades formativas del Plan.
+    2. Se genere una Matriz de Necesidades de Aprendizaje.
+    3. Se asocien cursos de LinkedIn a las actividades formativas de la Matriz.
     """)

@@ -5,7 +5,7 @@ from src.services.linkedin_api import fetch_courses
 def get_search_details(df):
     # Instructions box
     st.markdown("""
-    Cursos disponibles en el plan de formación (modalidad "Virtual" y fuente "Externa"):
+    Cursos disponibles en la matriz de necesidades de aprendizaje (modalidad "Virtual" y fuente "Externa"):
     """)
 
     df["Estado Curso"] = df["Estado Curso"].apply(lambda x: "✅" if x is not None else "🔍")

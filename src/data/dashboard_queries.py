@@ -24,112 +24,112 @@ def get_origin_filtered_data(origin_name=None):
         SELECT
             o.name AS Origen,
             COUNT(*) AS count
-        FROM final_plan fp
-        JOIN origin o ON fp.origin_id = o.id
+        FROM final_matrix fm
+        JOIN origin o ON fm.origin_id = o.id
         GROUP BY o.name
         ORDER BY count DESC
         """
         origin_of_needs = pd.read_sql_query(origin_query, conn)
 
-        # Gerencias data - filter by origin (from final_plan)
+        # Gerencias data - filter by origin (from final_matrix)
         gerencias_query = f"""
         SELECT
             g.name AS Gerencia,
             COUNT(*) AS count
-        FROM final_plan fp
-        LEFT JOIN gerencias g ON fp.gerencia_id = g.id
-        WHERE fp.origin_id = {origin_id}
+        FROM final_matrix fm
+        LEFT JOIN gerencias g ON fm.gerencia_id = g.id
+        WHERE fm.origin_id = {origin_id}
         GROUP BY g.name
         ORDER BY count DESC
         """
         activities_by_gerencia = pd.read_sql_query(gerencias_query, conn)
 
-        # Activities by subgerencia - filter by origin (from final_plan)
+        # Activities by subgerencia - filter by origin (from final_matrix)
         subgerencias_query = f"""
         SELECT
             sg.name AS Subgerencia,
             COUNT(*) AS count
-        FROM final_plan fp
-        LEFT JOIN subgerencias sg ON fp.subgerencia_id = sg.id
-        WHERE fp.origin_id = {origin_id}
+        FROM final_matrix fm
+        LEFT JOIN subgerencias sg ON fm.subgerencia_id = sg.id
+        WHERE fm.origin_id = {origin_id}
         GROUP BY sg.name
         ORDER BY count DESC
         """
         activities_by_subgerencia = pd.read_sql_query(subgerencias_query, conn)
 
-        # Activities by area - filter by origin (from final_plan)
+        # Activities by area - filter by origin (from final_matrix)
         areas_query = f"""
         SELECT
             a.name AS Área,
             COUNT(*) AS count
-        FROM final_plan fp
-        LEFT JOIN areas a ON fp.area_id = a.id
-        WHERE fp.origin_id = {origin_id}
+        FROM final_matrix fm
+        LEFT JOIN areas a ON fm.area_id = a.id
+        WHERE fm.origin_id = {origin_id}
         GROUP BY a.name
         ORDER BY count DESC
         """
         activities_by_area = pd.read_sql_query(areas_query, conn)
 
-        # Activities by audience - filter by origin (from final_plan)
+        # Activities by audience - filter by origin (from final_matrix)
         audience_query = f"""
         SELECT
             au.name AS Audiencia,
             COUNT(*) AS count
-        FROM final_plan fp
-        JOIN audiencias au ON fp.audiencia_id = au.id
-        WHERE fp.origin_id = {origin_id}
+        FROM final_matrix fm
+        JOIN audiencias au ON fm.audiencia_id = au.id
+        WHERE fm.origin_id = {origin_id}
         GROUP BY au.name
         ORDER BY count DESC
         """
         activities_by_audience = pd.read_sql_query(audience_query, conn)
 
-        # Activities by strategic challenge - filter by origin (from final_plan)
+        # Activities by strategic challenge - filter by origin (from final_matrix)
         challenge_query = f"""
         SELECT
             des.name AS 'Desafío Estratégico',
             COUNT(*) AS count
-        FROM final_plan fp
-        JOIN desafios des ON fp.desafio_id = des.id
-        WHERE fp.origin_id = {origin_id}
+        FROM final_matrix fm
+        JOIN desafios des ON fm.desafio_id = des.id
+        WHERE fm.origin_id = {origin_id}
         GROUP BY des.name
         ORDER BY count DESC
         """
         activities_by_challenge = pd.read_sql_query(challenge_query, conn)
 
-        # Activities by priority - filter by origin (from final_plan)
+        # Activities by priority - filter by origin (from final_matrix)
         priority_query = f"""
         SELECT
             p.name AS Prioridad,
             COUNT(*) AS count
-        FROM final_plan fp
-        JOIN prioridades p ON fp.prioridad_id = p.id
-        WHERE fp.origin_id = {origin_id}
+        FROM final_matrix fm
+        JOIN prioridades p ON fm.prioridad_id = p.id
+        WHERE fm.origin_id = {origin_id}
         GROUP BY p.name
         ORDER BY count DESC
         """
         activities_by_priority = pd.read_sql_query(priority_query, conn)
 
-        # Activities by modality - filter by origin (from final_plan)
+        # Activities by modality - filter by origin (from final_matrix)
         modality_query = f"""
         SELECT
             m.name AS Modalidad,
             COUNT(*) AS count
-        FROM final_plan fp
-        JOIN modalidades m ON fp.modalidad_id = m.id
-        WHERE fp.origin_id = {origin_id}
+        FROM final_matrix fm
+        JOIN modalidades m ON fm.modalidad_id = m.id
+        WHERE fm.origin_id = {origin_id}
         GROUP BY m.name
         ORDER BY count DESC
         """
         activities_by_modality = pd.read_sql_query(modality_query, conn)
 
-        # Activities by source - filter by origin (from final_plan)
+        # Activities by source - filter by origin (from final_matrix)
         source_query = f"""
         SELECT
             f.name AS Fuente,
             COUNT(*) AS count
-        FROM final_plan fp
-        JOIN fuentes f ON fp.fuente_id = f.id
-        WHERE fp.origin_id = {origin_id}
+        FROM final_matrix fm
+        JOIN fuentes f ON fm.fuente_id = f.id
+        WHERE fm.origin_id = {origin_id}
         GROUP BY f.name
         ORDER BY count DESC
         """
@@ -139,13 +139,13 @@ def get_origin_filtered_data(origin_name=None):
         linkedin_query = f"""
         SELECT
             CASE
-                WHEN plc.course_id IS NOT NULL THEN 'Con Curso Asociado'
+                WHEN mlc.course_id IS NOT NULL THEN 'Con Curso Asociado'
                 ELSE 'Sin Curso Asociado'
             END AS Actividades,
             COUNT(*) AS count
-        FROM final_plan fp
-        LEFT JOIN plan_linkedin_courses plc ON fp.id = plc.plan_id
-        WHERE fp.origin_id = {origin_id}
+        FROM final_matrix fm
+        LEFT JOIN matrix_linkedin_courses mlc ON fm.id = mlc.matrix_id
+        WHERE fm.origin_id = {origin_id}
         GROUP BY Actividades
         """
         linkedin_usage = pd.read_sql_query(linkedin_query, conn)
@@ -210,8 +210,8 @@ def get_summary_metrics(origin_filter=None):
 
     try:
         if origin_filter is None or origin_filter == "Todos":
-            # Get total counts (all from final_plan for consistency)
-            activities_query = "SELECT COUNT(*) FROM final_plan"
+            # Get total counts (all from final_matrix for consistency)
+            activities_query = "SELECT COUNT(*) FROM final_matrix"
             linkedin_query = "SELECT COUNT(*) FROM linkedin_courses"
             respondents_query = "SELECT COUNT(DISTINCT submission_id) FROM raw_data_forms"
             needs_query = "SELECT COUNT(*) FROM raw_data_forms"
@@ -226,13 +226,13 @@ def get_summary_metrics(origin_filter=None):
             origin_id = origin_id[0]
 
             # Get filtered counts
-            activities_query = f"SELECT COUNT(*) FROM final_plan WHERE origin_id = {origin_id}"
+            activities_query = f"SELECT COUNT(*) FROM final_matrix WHERE origin_id = {origin_id}"
             linkedin_query = f"""
                 SELECT COUNT(*)
                 FROM linkedin_courses lc
-                LEFT JOIN plan_linkedin_courses plc ON lc.id = plc.course_id
-                LEFT JOIN final_plan fp ON plc.plan_id = fp.id
-                WHERE fp.origin_id = {origin_id}
+                LEFT JOIN matrix_linkedin_courses mlc ON lc.id = mlc.course_id
+                LEFT JOIN final_matrix fm ON mlc.matrix_id = fm.id
+                WHERE fm.origin_id = {origin_id}
             """
             needs_query = f"SELECT COUNT(*) FROM raw_data_forms"
             respondents_query = f"SELECT COUNT(DISTINCT submission_id) FROM raw_data_forms"
@@ -257,110 +257,110 @@ def get_dashboard_data():
     """Get all data needed for the dashboard"""
     conn = get_connection()
 
-    # Origin of needs in final plan
+    # Origin of needs in final matrix
     origin_query = """
     SELECT
         o.name AS Origen,
         COUNT(*) AS count
-    FROM final_plan fp
-    JOIN origin o ON fp.origin_id = o.id
+    FROM final_matrix fm
+    JOIN origin o ON fm.origin_id = o.id
     GROUP BY o.name
     ORDER BY count DESC
     """
     origin_of_needs = pd.read_sql_query(origin_query, conn)
 
-    # Activities by gerencia (from final_plan)
+    # Activities by gerencia (from final_matrix)
     gerencias_query = """
     SELECT
         g.name AS Gerencia,
         COUNT(*) AS count
-    FROM final_plan fp
-    LEFT JOIN gerencias g ON fp.gerencia_id = g.id
+    FROM final_matrix fm
+    LEFT JOIN gerencias g ON fm.gerencia_id = g.id
     WHERE g.name IS NOT NULL
     GROUP BY g.name
     ORDER BY count DESC
     """
     activities_by_gerencia = pd.read_sql_query(gerencias_query, conn)
 
-    # Activities by subgerencia (from final_plan)
+    # Activities by subgerencia (from final_matrix)
     subgerencias_query = """
     SELECT
         sg.name AS Subgerencia,
         COUNT(*) AS count
-    FROM final_plan fp
-    LEFT JOIN subgerencias sg ON fp.subgerencia_id = sg.id
+    FROM final_matrix fm
+    LEFT JOIN subgerencias sg ON fm.subgerencia_id = sg.id
     GROUP BY sg.name
     ORDER BY count DESC
     """
     activities_by_subgerencia = pd.read_sql_query(subgerencias_query, conn)
 
-    # Activities by area (from final_plan)
+    # Activities by area (from final_matrix)
     areas_query = """
     SELECT
         a.name AS Área,
         COUNT(*) AS count
-    FROM final_plan fp
-    LEFT JOIN areas a ON fp.area_id = a.id
+    FROM final_matrix fm
+    LEFT JOIN areas a ON fm.area_id = a.id
     GROUP BY a.name
     ORDER BY count DESC
     """
     activities_by_area = pd.read_sql_query(areas_query, conn)
 
-    # Activities by audience (from final_plan)
+    # Activities by audience (from final_matrix)
     audience_query = """
     SELECT
         au.name AS Audiencia,
         COUNT(*) AS count
-    FROM final_plan fp
-    JOIN audiencias au ON fp.audiencia_id = au.id
+    FROM final_matrix fm
+    JOIN audiencias au ON fm.audiencia_id = au.id
     GROUP BY au.name
     ORDER BY count DESC
     """
     activities_by_audience = pd.read_sql_query(audience_query, conn)
 
-    # Activities by strategic challenge (from final_plan)
+    # Activities by strategic challenge (from final_matrix)
     challenge_query = """
     SELECT
         des.name AS 'Desafío Estratégico',
         COUNT(*) AS count
-    FROM final_plan fp
-    JOIN desafios des ON fp.desafio_id = des.id
+    FROM final_matrix fm
+    JOIN desafios des ON fm.desafio_id = des.id
     GROUP BY des.name
     ORDER BY count DESC
     """
     activities_by_challenge = pd.read_sql_query(challenge_query, conn)
 
-    # Activities by priority (from final_plan)
+    # Activities by priority (from final_matrix)
     priority_query = """
     SELECT
         p.name AS Prioridad,
         COUNT(*) AS count
-    FROM final_plan fp
-    JOIN prioridades p ON fp.prioridad_id = p.id
+    FROM final_matrix fm
+    JOIN prioridades p ON fm.prioridad_id = p.id
     GROUP BY p.name
     ORDER BY count DESC
     """
     activities_by_priority = pd.read_sql_query(priority_query, conn)
 
-    # Activities by modality (from final_plan)
+    # Activities by modality (from final_matrix)
     modality_query = """
     SELECT
         m.name AS Modalidad,
         COUNT(*) AS count
-    FROM final_plan fp
-    JOIN modalidades m ON fp.modalidad_id = m.id
+    FROM final_matrix fm
+    JOIN modalidades m ON fm.modalidad_id = m.id
     GROUP BY m.name
     ORDER BY count DESC
     """
     activities_by_modality = pd.read_sql_query(modality_query, conn)
 
-    # Activities by source (from final_plan)
+    # Activities by source (from final_matrix)
     source_query = """
     SELECT
         f.name AS Fuente,
         COUNT(*) AS count
-    FROM final_plan fp
-    JOIN fuentes f ON fp.fuente_id = f.id
+    FROM final_matrix fm
+    JOIN fuentes f ON fm.fuente_id = f.id
     GROUP BY f.name
     ORDER BY count DESC
     """
@@ -370,17 +370,17 @@ def get_dashboard_data():
     linkedin_query = """
     SELECT
         CASE
-            WHEN plc.course_id IS NOT NULL THEN 'Con Curso Asociado'
+            WHEN mlc.course_id IS NOT NULL THEN 'Con Curso Asociado'
             ELSE 'Sin Curso Asociado'
         END AS Actividades,
         COUNT(*) AS count
-    FROM final_plan fp
-    LEFT JOIN plan_linkedin_courses plc ON fp.id = plc.plan_id
+    FROM final_matrix fm
+    LEFT JOIN matrix_linkedin_courses mlc ON fm.id = mlc.matrix_id
     GROUP BY Actividades
     """
     linkedin_usage = pd.read_sql_query(linkedin_query, conn)
 
-    # Time-based trends (from final_plan)
+    # Time-based trends (from final_matrix)
     time_query = """
     SELECT
         DATE(created_at) AS Fecha,
@@ -391,7 +391,7 @@ def get_dashboard_data():
     """
     time_trends = pd.read_sql_query(time_query, conn)
     
-    # Monthly trends (from final_plan)
+    # Monthly trends (from final_matrix)
     monthly_query = """
     SELECT
         strftime('%Y-%m', created_at) as Mes,

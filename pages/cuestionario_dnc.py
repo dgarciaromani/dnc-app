@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 from src.forms.dnc_form import gerencias_dict, get_identification_data, get_form_data
-from src.data.database_utils import fetch_all, update_respondents, update_raw_data_forms, insert_row_into_plan
+from src.data.database_utils import fetch_all, update_respondents, update_raw_data_forms, insert_row_into_matrix
 from src.services.bedrock_api import get_from_ai, process_response
 from src.auth.authentication import stay_authenticated
 
@@ -102,7 +102,7 @@ else:
             if form_info["challenge"] is None or not form_info["changes"].strip() or not form_info["whats_missing"].strip() or not form_info["learnings"] or form_info["audience"] is None or form_info["mode"] is None or not form_info["source"] or form_info["priority"] is None:
                 st.error("Por favor completa todos los campos con (*).")
             else:
-                with st.spinner("Procesando y guardando la información para el Plan... Por favor espera ⏳"):
+                with st.spinner("Procesando y guardando la información para la Matriz de Necesidades... Por favor espera ⏳"):
                     # Insert user information into the database
                     if st.session_state.submission_id is None:
                         submission_id = update_respondents(
@@ -163,7 +163,7 @@ else:
                     processed_response = process_response(response)
 
                     for item in processed_response:
-                        insert_row_into_plan(
+                        insert_row_into_matrix(
                             item, 
                             "DNC",
                             st.session_state.basic_info["gerencia"],

@@ -86,7 +86,7 @@ if selected_table != "Selecciona una opción...":
     # Delete option
     with st.form("delete_option", clear_on_submit=True):
         st.header(f"🗑️ Eliminar una opción de {selected_table}")
-        st.write("**Nota:** Si la opción está en uso en el plan, no podrás eliminarla, solo podrás editarla.")
+        st.write("**Nota:** Si la opción está en uso en la matriz de necesidades, no podrás eliminarla, solo podrás editarla.")
 
         delete = st.dataframe(
             df,
