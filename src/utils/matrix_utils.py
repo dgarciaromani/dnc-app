@@ -61,7 +61,18 @@ def show_filters(df):
             placeholder="Elige una Modalidad",
             key="modalidad_filter"
         )
-        st.session_state.filters["Modalidad"] = selected_modalidades            
+        st.session_state.filters["Modalidad"] = selected_modalidades
+
+        # Validación filter
+        validaciones = ["✅ Validado", "❌ Pendiente"]
+        selected_validaciones = st.multiselect(
+            "Validación",
+            options=validaciones,
+            default=st.session_state.filters.get("Validación", []),
+            placeholder="Elige un Estado",
+            key="validacion_filter"
+        )
+        st.session_state.filters["Validación"] = selected_validaciones          
 
     with col3:
         # Área filter
@@ -127,3 +138,12 @@ def reload_data():
     # Ensure the dataframe has a proper integer index starting from 0
     df.reset_index(drop=True, inplace=True)
     return df
+
+
+def format_asociacion(row):
+    # Insert Asociación column at position 2 (after Origen and Validación)
+    linkedin_course = row['Curso Sugerido LinkedIn']
+    if pd.notna(linkedin_course) and linkedin_course.strip() != "":
+        return f"🌐 {linkedin_course}"
+    else:
+        return "❌ Sin curso asociado"

@@ -20,7 +20,7 @@ if not df.empty:
     # Add some summary statistics
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("🎓 Total de Cursos LinkedIn", len(df), border=True)
+        st.metric("🌐 Total de Cursos LinkedIn", len(df), border=True)
     with col2:
         total_associations = df["Número de Actividades Asociadas"].sum()
         st.metric("🎯 Total de Asociaciones LinkedIn - Matriz", int(total_associations), border=True)

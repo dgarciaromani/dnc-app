@@ -3,6 +3,7 @@ import pandas as pd
 import altair as alt
 from src.utils.dashboard_utils import create_pie_chart, create_horizontal_bar_chart, create_vertical_bar_chart
 from src.data.dashboard_queries import get_dashboard_data, get_origin_filtered_data, get_available_origins, get_summary_metrics
+from src.data.database_utils import fetch_matrix
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -62,20 +63,46 @@ try:
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("🎯 Cantidad de Actividades Formativas", metrics["activities"], border=True)
-
-    with col2:
-        st.metric("🎓 Cantidad de Cursos LinkedIn", metrics["linkedin"], border=True)
-
-    with col3:
+        st.metric("📊 Total Actividades Formativas", metrics["activities"], border=True)
         if selected_origin in ["DNC", "Todos"]:
             st.metric("👤 Cantidad de Personas Encuestadas", metrics["respondents"], border=True)
-        
-    with col4:
+
+    with col2:
+        st.metric("✅ Actividades Validadas", f"{metrics["validated_count"]} ({metrics['validation_percentage']}%)", border=True)
         if selected_origin in ["DNC", "Todos"]:
             st.metric("📋 Cantidad de Necesidades Levantadas", metrics["needs"], border=True)
+        
+
+    with col3:
+        st.metric("🌐 Cantidad de Cursos LinkedIn", metrics["linkedin"], border=True)
+        
+        
+    with col4:
+        st.metric("🎓 Cantidad de Cursos MAS", 0, border=True)
 
     # Main content area with all charts
+    # Get validation data for detailed tables
+    validation_data = fetch_matrix()
+    df_validation = pd.DataFrame(validation_data)
+
+    # Validation status breakdown tables
+    with st.expander("📊 Estado de Validación", expanded=False):
+        # By Gerencia
+        st.text("Por Gerencia")
+        if not df_validation.empty:
+            gerencia_validation = df_validation.groupby('Gerencia')['Validación'].value_counts().unstack().fillna(0)
+            gerencia_validation['Total'] = gerencia_validation.sum(axis=1)
+            gerencia_validation['% Validado'] = round((gerencia_validation.get('✅ Validado', 0) / gerencia_validation['Total']) * 100, 1)
+            st.dataframe(gerencia_validation, use_container_width=True)
+
+        # By Desafío Estratégico
+        st.text("Por Desafío Estratégico")
+        if not df_validation.empty:
+            desafio_validation = df_validation.groupby('Desafío Estratégico')['Validación'].value_counts().unstack().fillna(0)
+            desafio_validation['Total'] = desafio_validation.sum(axis=1)
+            desafio_validation['% Validado'] = round((desafio_validation.get('✅ Validado', 0) / desafio_validation['Total']) * 100, 1)
+            st.dataframe(desafio_validation, use_container_width=True)
+
     # Activities by Gerencia Analysis
     with st.expander("🏢 Actividades por Gerencia, Subgerencia, Área y Audiencia"):
         col1, col2 = st.columns(2)
@@ -175,7 +202,7 @@ try:
                 st.info("No hay datos de fuentes")
 
     # LinkedIn Courses Analysis
-    with st.expander("🎓 Análisis de Cursos LinkedIn"):
+    with st.expander("🌐 Análisis de Cursos LinkedIn"):
         col1, col2 = st.columns(2)
 
         with col1:

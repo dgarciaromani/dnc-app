@@ -4,7 +4,7 @@ import time
 from src.data.database_utils import download_demo_db, fetch_matrix, update_final_matrix, update_matrix_linkedin_courses, delete_matrix_entry, get_matrix_metrics
 from src.forms.edit_matrix_form import get_row_data, validate_form_info, has_data_changed, get_id_from_name, gerencias, subgerencias, areas, desafios, audiencias, modalidades, fuentes, prioridades
 from src.forms.add_initiative_form import add_initiative_form, validate_add_form_info, save_new_initiative
-from src.utils.matrix_utils import show_filters, reload_data
+from src.utils.matrix_utils import show_filters, reload_data, format_asociacion
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -19,7 +19,7 @@ data = fetch_matrix()
 df = pd.DataFrame(data)
 
 # Main title
-st.title("Mi Matriz de Necesidades de Aprendizaje")
+st.title("Matriz de Necesidades de Aprendizaje")
 
 # Create tabs for different functionalities
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Ver Matriz", "✏️ Editar", "➕ Agregar", "🗑️ Eliminar"])
@@ -32,13 +32,9 @@ with tab1:
     # Reload data to ensure we have the latest changes
     df = reload_data()
 
-    # Add Asociación column based on LinkedIn course presence (positioned as second column)
+    # Add Asociación column based on LinkedIn course presence (positioned as third column)
     if not df.empty:
-        # Insert at specific position
-        asociacion_values = df['Curso Sugerido LinkedIn'].apply(
-            lambda x: "✅" if pd.notna(x) and x.strip() != "" else "❌"
-        )
-        df.insert(2, 'Asociación', asociacion_values)
+        df.insert(3, 'Asociación', df.apply(format_asociacion, axis=1))        
 
     # Display only if there is data
     if not df.empty:
@@ -65,6 +61,17 @@ with tab1:
                     elif "Sin cursos asociados" in selected_values:
                         # Only show rows without LinkedIn courses
                         filtered_df = filtered_df[filtered_df[linkedin_col].isna() | (filtered_df[linkedin_col] == "")]
+                elif column == "Validación":
+                    # Special handling for Validación filter
+                    if "✅ Validado" in selected_values and "❌ Pendiente" in selected_values:
+                        # Both selected - show all rows
+                        pass
+                    elif "✅ Validado" in selected_values:
+                        # Only show validated rows
+                        filtered_df = filtered_df[filtered_df["Validación"].str.contains("✅ Validado", na=False)]
+                    elif "❌ Pendiente" in selected_values:
+                        # Only show unvalidated rows
+                        filtered_df = filtered_df[filtered_df["Validación"].str.contains("❌ Pendiente", na=False)]
                 else:
                     # Normal filter logic for other columns
                     filtered_df = filtered_df[filtered_df[column].isin(selected_values)]
@@ -80,21 +87,25 @@ with tab1:
             modalidad_filter=current_filters.get("Modalidad"),
             fuente_filter=current_filters.get("Fuente"),
             prioridad_filter=current_filters.get("Prioridad"),
-            asociaciones_filter=current_filters.get("Asociaciones")
+            validacion_filter=current_filters.get("Validación"),
+            asociaciones_filter=current_filters.get("Asociaciones")            
         )
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
 
         with col1:
             st.metric("🎯 Cantidad de Actividades Formativas", metrics["activities"], border=True)
 
         with col2:
-            st.metric("🎓 Cantidad de Cursos LinkedIn", metrics["linkedin"], border=True)
+            st.metric("✅ Actividades Formativas Validadas", metrics["validated"], border=True)
 
         with col3:
             if metrics["activities"] > 0:
                 coverage_pct = round((metrics["linkedin"] / metrics["activities"]) * 100, 1)
-                st.metric("📈 Asignación de Actividades Formativas a Cursos", f"{coverage_pct}%", border=True)
+                st.metric("📈 Asociación de Actividades a Cursos", f"{coverage_pct}%", border=True)
+
+        with col4:
+            st.metric("🌐 Cantidad de Cursos LinkedIn", metrics["linkedin"], border=True)
 
         # Display filtered dataframe
         if not filtered_df.empty:
@@ -105,10 +116,16 @@ with tab1:
                 hide_index=True,
                 column_config={
                     "id": None,  # Hide the id column
+                    "Curso Sugerido LinkedIn": None,  # Hide the LinkedIn course column since we show it in Asociación
+                    "Validación": st.column_config.TextColumn(
+                        "Validación",
+                        help="Estado de validación de la actividad formativa",
+                        width="small"
+                    ),
                     "Asociación": st.column_config.TextColumn(
                         "Asociación",
-                        help="Indica si hay un curso de LinkedIn asociado",
-                        width="small"
+                        help="Muestra el curso de LinkedIn asociado (🌐) o indica que no hay asociación (❌)",
+                        width="medium"
                     ),
                 },
                 key="view_matrix_dataframe")
@@ -243,6 +260,10 @@ with tab4:
     # Reload data to ensure we have the latest changes
     df = reload_data()
 
+    # Add Asociación column for consistency with ver matriz tab
+    if not df.empty:
+        df.insert(3, 'Asociación', df.apply(format_asociacion, axis=1))
+
     # Delete functionality
     if not df.empty:
         st.markdown("""Por favor, selecciona las filas para eliminar:""")
@@ -252,6 +273,17 @@ with tab4:
             hide_index=True,
             column_config={
                 "id": None,  # Hide the id column
+                "Curso Sugerido LinkedIn": None,  # Hide the LinkedIn course column since we show it in Asociación
+                "Validación": st.column_config.TextColumn(
+                    "Validación",
+                    help="Estado de validación de la actividad formativa",
+                    width="small"
+                ),
+                "Asociación": st.column_config.TextColumn(
+                    "Asociación",
+                    help="Muestra el curso de LinkedIn asociado (✅) o indica que no hay asociación (❌)",
+                    width="medium"
+                ),
             },
             on_select="rerun",
             selection_mode="multi-row",

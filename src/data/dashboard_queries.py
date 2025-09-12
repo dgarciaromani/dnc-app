@@ -242,11 +242,40 @@ def get_summary_metrics(origin_filter=None):
         activities = conn.execute(activities_query).fetchone()[0]
         linkedin = conn.execute(linkedin_query).fetchone()[0]
 
+        # Get validation statistics
+        if origin_filter is None or origin_filter == "Todos":
+            validation_query = """
+                SELECT
+                    COUNT(CASE WHEN vm.validated = 1 THEN 1 END) as validated_count,
+                    COUNT(CASE WHEN vm.validated = 0 OR vm.validated IS NULL THEN 1 END) as pending_count
+                FROM final_matrix fm
+                LEFT JOIN validated_matrix vm ON fm.id = vm.matrix_id
+            """
+        else:
+            validation_query = f"""
+                SELECT
+                    COUNT(CASE WHEN vm.validated = 1 THEN 1 END) as validated_count,
+                    COUNT(CASE WHEN vm.validated = 0 OR vm.validated IS NULL THEN 1 END) as pending_count
+                FROM final_matrix fm
+                LEFT JOIN validated_matrix vm ON fm.id = vm.matrix_id
+                WHERE fm.origin_id = {origin_id}
+            """
+
+        validation_result = conn.execute(validation_query).fetchone()
+        validated_count = validation_result[0] or 0
+        pending_count = validation_result[1] or 0
+        total_validation_activities = validated_count + pending_count
+        validation_percentage = round((validated_count / total_validation_activities * 100), 1) if total_validation_activities > 0 else 0
+
         return {
             "respondents": respondents,
             "needs": needs,
             "activities": activities,
-            "linkedin": linkedin
+            "linkedin": linkedin,
+            "validated_count": validated_count,
+            "pending_count": pending_count,
+            "total_validation_activities": total_validation_activities,
+            "validation_percentage": validation_percentage
         }
 
     finally:

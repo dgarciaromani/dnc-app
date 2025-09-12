@@ -159,6 +159,19 @@ CREATE TABLE IF NOT EXISTS final_matrix (
 )
 """)
 
+# Validated matrix
+c.execute("""
+CREATE TABLE IF NOT EXISTS validated_matrix (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    matrix_id INTEGER NOT NULL UNIQUE,
+    validated INTEGER NOT NULL DEFAULT 0 CHECK (validated IN (0, 1)),
+    validated_by TEXT,
+    validated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    validation_notes TEXT,
+    FOREIGN KEY (matrix_id) REFERENCES final_matrix(id)
+)
+""")
+
 # Linkedin courses
 c.execute("""
 CREATE TABLE IF NOT EXISTS linkedin_courses (

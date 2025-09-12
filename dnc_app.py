@@ -92,13 +92,14 @@ with st.sidebar:
 
 # Define pages
 dashboard = st.Page("pages/dashboard.py", title="Dashboard", icon=":material/dashboard:")
-matrix = st.Page("pages/matriz_necesidades.py", title="Mi Matriz de Necesidades", icon=":material/list:")
+matrix = st.Page("pages/matriz_necesidades.py", title="Matriz de Necesidades", icon=":material/list:")
+validation = st.Page("pages/validar_necesidades.py", title="Validar Necesidades", icon=":material/check_circle:")
 dnc = st.Page("pages/cuestionario_dnc.py", title="Cuestionario DNC", icon=":material/question_answer:")
 search_course = st.Page("pages/buscar_cursos.py", title="Buscar y Agregar Cursos LinkedIn", icon=":material/search:")
 respondents = st.Page("pages/encuestados.py", title="Encuestados", icon=":material/group:")
 responses = st.Page("pages/respuestas.py", title="Respuestas", icon=":material/feedback:")
 desplegables = st.Page("pages/desplegables.py", title="Administrar Desplegables", icon=":material/arrow_drop_down_circle:")
-linkedin_courses = st.Page("pages/cursos_linkedin.py", title="Cursos LinkedIn", icon=":material/school:")
+linkedin_courses = st.Page("pages/cursos_linkedin.py", title="Cursos LinkedIn", icon=":material/public:")
 database = st.Page("pages/database.py", title="Base de Datos", icon=":material/database:")
 
 # Role-based navigation
@@ -108,7 +109,7 @@ if user_role == "admin":
     # Admin sees all pages
     nav = st.navigation({
         "Home:": [dashboard],
-        "Matriz de Necesidades:": [matrix],
+        "Matriz de Necesidades:": [matrix, validation],
         "Levantar necesidades:": [dnc],
         "Cursos en LinkedIn:": [linkedin_courses, search_course],
         "Administración:": [respondents, responses, desplegables, database],

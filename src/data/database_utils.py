@@ -162,23 +162,24 @@ def download_demo_db():
 
 def fetch_matrix():
     query = """
-    SELECT 
-        fm.id, 
+    SELECT
+        fm.id,
         o.name AS "Origen",
-        g.name AS "Gerencia", 
+        CASE WHEN vm.validated = 1 THEN '✅ Validado' ELSE '❌ Pendiente' END AS "Validación",
+        g.name AS "Gerencia",
         sg.name AS "Subgerencia",
-        a.name AS "Área", 
-        d.name AS "Desafío Estratégico", 
-        fm.actividad_formativa AS "Actividad Formativa", 
-        fm.objetivo_desempeno AS "Objetivo Desempeño", 
-        fm.contenidos_especificos AS "Contenidos", 
-        fm.skills AS "Skills", 
+        a.name AS "Área",
+        d.name AS "Desafío Estratégico",
+        fm.actividad_formativa AS "Actividad Formativa",
+        fm.objetivo_desempeno AS "Objetivo Desempeño",
+        fm.contenidos_especificos AS "Contenidos",
+        fm.skills AS "Skills",
         fm.keywords AS "Keywords",
-        au.name AS "Audiencia", 
+        au.name AS "Audiencia",
         m.name AS "Modalidad",
         f.name AS "Fuente",
         fm.fuente_interna AS "Fuente Interna",
-        p.name AS "Prioridad", 
+        p.name AS "Prioridad",
         fm.created_at AS "Fecha Creación",
         GROUP_CONCAT(lc.linkedin_course, ', ') AS "Curso Sugerido LinkedIn"
     FROM final_matrix fm
@@ -192,6 +193,7 @@ def fetch_matrix():
     LEFT JOIN fuentes f ON fm.fuente_id = f.id
     LEFT JOIN prioridades p ON fm.prioridad_id = p.id
     LEFT JOIN matrix_linkedin_courses mlc ON mlc.matrix_id = fm.id
+    LEFT JOIN validated_matrix vm ON vm.matrix_id = fm.id
     LEFT JOIN linkedin_courses lc ON lc.id = mlc.course_id
     GROUP BY fm.id
     ORDER BY g.name;
@@ -275,12 +277,66 @@ def update_matrix_linkedin_courses(matrix_id, linkedin_course_name):
     conn.close()
 
 
-def delete_matrix_entry(matrix_id):
-    """Delete a matrix entry and its related LinkedIn courses"""
+def validate_matrix_entry(matrix_id, validated_by=None, validation_notes=None):
     conn = get_connection()
     cur = conn.cursor()
 
     try:
+        # Ensure matrix_id is an integer
+        matrix_id = int(matrix_id)
+
+        # Check if validation record exists
+        cur.execute("SELECT id FROM validated_matrix WHERE matrix_id = ?", (matrix_id,))
+        existing_record = cur.fetchone()
+
+        if existing_record:
+            # Update existing validation record
+            cur.execute("""
+                UPDATE validated_matrix
+                SET validated = 1, validated_by = ?, validation_notes = ?, validated_at = CURRENT_TIMESTAMP
+                WHERE matrix_id = ?
+            """, (validated_by, validation_notes, matrix_id))
+        else:
+            # Insert new validation record
+            cur.execute("""
+                INSERT INTO validated_matrix (matrix_id, validated, validated_by, validation_notes)
+                VALUES (?, 1, ?, ?)
+            """, (matrix_id, validated_by, validation_notes))
+
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
+
+
+def unvalidate_matrix_entry(matrix_id):
+    """Remove validation from a matrix entry"""
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        # Ensure matrix_id is an integer
+        matrix_id = int(matrix_id)
+        cur.execute("DELETE FROM validated_matrix WHERE matrix_id = ?", (matrix_id,))
+        conn.commit()
+
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
+
+
+def delete_matrix_entry(matrix_id):
+    """Delete a matrix entry and its related LinkedIn courses and validation records"""
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        # Check for LinkedIn course relationships
         cur.execute("SELECT matrix_id FROM matrix_linkedin_courses WHERE matrix_id = ?", (matrix_id,))
         relationships_found = cur.fetchone()
 
@@ -288,12 +344,20 @@ def delete_matrix_entry(matrix_id):
             # First delete the LinkedIn course relationships
             cur.execute("DELETE FROM matrix_linkedin_courses WHERE matrix_id = ?", (matrix_id,))
 
+        # Check for validation records
+        cur.execute("SELECT id FROM validated_matrix WHERE matrix_id = ?", (matrix_id,))
+        validation_found = cur.fetchone()
+
+        if validation_found:
+            # Delete the validation record
+            cur.execute("DELETE FROM validated_matrix WHERE matrix_id = ?", (matrix_id,))
+
         # Then delete the matrix entry
         cur.execute("DELETE FROM final_matrix WHERE id = ?", (matrix_id,))
 
         conn.commit()
 
-        # Return True if the main matrix entry was deleted (regardless of LinkedIn courses)
+        # Return True if the main matrix entry was deleted
         return True
 
     except Exception as e:
@@ -694,7 +758,7 @@ def delete_option(selected_table, option_to_delete):
 def get_matrix_metrics(origin_filter=None, gerencia_filter=None, subgerencia_filter=None,
                      area_filter=None, desafio_filter=None, audiencia_filter=None,
                      modalidad_filter=None, fuente_filter=None, prioridad_filter=None,
-                     asociaciones_filter=None):
+                     asociaciones_filter=None, validacion_filter=None):
     """Get summary metrics, optionally filtered by various criteria"""
     conn = get_connection()
 
@@ -711,7 +775,7 @@ def get_matrix_metrics(origin_filter=None, gerencia_filter=None, subgerencia_fil
                 where_conditions.append("fm.origin_id = ?")
                 params.append(origin_id[0])
             else:
-                return {"activities": 0, "linkedin": 0}
+                return {"activities": 0, "linkedin": 0, "validated": 0}
 
         # Gerencia filter
         if gerencia_filter:
@@ -823,51 +887,72 @@ def get_matrix_metrics(origin_filter=None, gerencia_filter=None, subgerencia_fil
                 else:
                     activities_where = "fm.id NOT IN (SELECT DISTINCT mlc.matrix_id FROM matrix_linkedin_courses mlc)"
 
+        # Validación filter
+        if validacion_filter:
+            if "✅ Validado" in validacion_filter and "❌ Pendiente" in validacion_filter:
+                # Both selected - no additional filter
+                pass
+            elif "✅ Validado" in validacion_filter:
+                # Only validated activities
+                if activities_where:
+                    activities_where = f"{activities_where} AND fm.id IN (SELECT vm.matrix_id FROM validated_matrix vm WHERE vm.validated = 1)"
+                else:
+                    activities_where = "fm.id IN (SELECT vm.matrix_id FROM validated_matrix vm WHERE vm.validated = 1)"
+            elif "❌ Pendiente" in validacion_filter:
+                # Only unvalidated activities (not in validated_matrix)
+                if activities_where:
+                    activities_where = f"{activities_where} AND fm.id NOT IN (SELECT vm.matrix_id FROM validated_matrix vm)"
+                else:
+                    activities_where = "fm.id NOT IN (SELECT vm.matrix_id FROM validated_matrix vm)"
+
         if activities_where:
             activities_query = f"SELECT COUNT(*) FROM final_matrix fm WHERE {activities_where}"
         else:
             activities_query = "SELECT COUNT(*) FROM final_matrix"
 
-        # Build LinkedIn courses query with asociaciones filter
-        if asociaciones_filter:
-            if "Con cursos asociados" in asociaciones_filter and "Sin cursos asociados" in asociaciones_filter:
-                # Both selected - no additional filter
-                linkedin_where = where_clause
-            elif "Con cursos asociados" in asociaciones_filter:
-                # Only with LinkedIn courses
-                if where_clause:
-                    linkedin_where = f"{where_clause} AND mlc.course_id IS NOT NULL"
-                else:
-                    linkedin_where = "mlc.course_id IS NOT NULL"
-            elif "Sin cursos asociados" in asociaciones_filter:
-                # Only without LinkedIn courses
-                if where_clause:
-                    linkedin_where = f"{where_clause} AND mlc.course_id IS NULL"
-                else:
-                    linkedin_where = "mlc.course_id IS NULL"
-            else:
-                linkedin_where = where_clause
-        else:
-            linkedin_where = where_clause
+        # Build LinkedIn courses query - count courses associated with filtered activities
+        linkedin_where = where_clause
 
         if linkedin_where:
             linkedin_query = f"""
                 SELECT COUNT(DISTINCT lc.id)
                 FROM linkedin_courses lc
-                LEFT JOIN matrix_linkedin_courses mlc ON lc.id = mlc.course_id
-                LEFT JOIN final_matrix fm ON mlc.matrix_id = fm.id
+                INNER JOIN matrix_linkedin_courses mlc ON lc.id = mlc.course_id
+                INNER JOIN final_matrix fm ON mlc.matrix_id = fm.id
                 WHERE {linkedin_where}
             """
         else:
-            linkedin_query = "SELECT COUNT(*) FROM linkedin_courses"
+            linkedin_query = """
+                SELECT COUNT(DISTINCT lc.id)
+                FROM linkedin_courses lc
+                INNER JOIN matrix_linkedin_courses mlc ON lc.id = mlc.course_id
+            """
+
+        # Build validated activities query
+        validated_where = where_clause
+        if validated_where:
+            validated_query = f"""
+                SELECT COUNT(*)
+                FROM final_matrix fm
+                INNER JOIN validated_matrix vm ON fm.id = vm.matrix_id AND vm.validated = 1
+                WHERE {validated_where}
+            """
+        else:
+            validated_query = """
+                SELECT COUNT(*)
+                FROM final_matrix fm
+                INNER JOIN validated_matrix vm ON fm.id = vm.matrix_id AND vm.validated = 1
+            """
 
         # Execute queries
         activities = conn.execute(activities_query, params).fetchone()[0] if params else conn.execute(activities_query).fetchone()[0]
         linkedin = conn.execute(linkedin_query, params).fetchone()[0] if params and linkedin_where else conn.execute(linkedin_query).fetchone()[0]
+        validated = conn.execute(validated_query, params).fetchone()[0] if params and validated_where else conn.execute(validated_query).fetchone()[0]
 
         return {
             "activities": activities,
-            "linkedin": linkedin
+            "linkedin": linkedin,
+            "validated": validated
         }
 
     finally:
