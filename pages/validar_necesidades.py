@@ -3,6 +3,7 @@ import pandas as pd
 import time
 from src.data.database_utils import fetch_matrix, validate_matrix_entry, unvalidate_matrix_entry
 from src.utils.matrix_utils import reload_data
+from src.utils.download_utils import download_excel_button
 from src.utils.validar_utils import show_validation_filters
 
 # Authentication check
@@ -34,13 +35,16 @@ with tab1:
         validated_df = df[df['Validación'].str.contains('✅ Validado', na=False)]
 
         if not validated_df.empty:
+            # Store original total for section display
+            total_validated = len(validated_df)
+
             # Add Asociación column
             asociacion_values = validated_df['Curso Sugerido LinkedIn'].apply(
                 lambda x: "✅ LinkedIn" if pd.notna(x) and x.strip() != "" else "❌"
             )
             validated_df.insert(3, 'Asociación', asociacion_values)
 
-            st.markdown(f"**Total de actividades validadas: {len(validated_df)}**")
+            st.markdown(f"**Total de actividades validadas: {total_validated}**")
 
             # Filters section
             with st.expander("🔍 Filtros", expanded=False):
@@ -73,7 +77,16 @@ with tab1:
                             # Normal filter logic for other columns
                             validated_df = validated_df[validated_df[column].isin(selected_values)]
 
+            # Download button section
+            if not validated_df.empty:
+                download_excel_button(
+                    validated_df,
+                    filename="necesidades_validadas.xlsx",
+                    button_text_prefix="📥 Descargar"
+                )
+
             # Display validated activities
+            st.markdown(f"**Mostrando {len(validated_df)} de {total_validated} registros**")
             st.dataframe(
                 validated_df,
                 use_container_width=True,
@@ -107,13 +120,16 @@ with tab2:
         unvalidated_df = df[df['Validación'].str.contains('❌ Pendiente', na=False)]
 
         if not unvalidated_df.empty:
+            # Store original total for section display
+            total_pending = len(unvalidated_df)
+
             # Add Asociación column for better context
             asociacion_values = unvalidated_df['Curso Sugerido LinkedIn'].apply(
                 lambda x: "✅ LinkedIn" if pd.notna(x) and x.strip() != "" else "❌"
             )
             unvalidated_df.insert(3, 'Asociación', asociacion_values)
 
-            st.markdown(f"**Actividades pendientes: {len(unvalidated_df)}**")
+            st.markdown(f"**Actividades pendientes: {total_pending}**")
 
             # Filters section
             with st.expander("🔍 Filtros", expanded=False):
@@ -145,6 +161,17 @@ with tab2:
                         elif column in unvalidated_df.columns:
                             # Normal filter logic for other columns
                             unvalidated_df = unvalidated_df[unvalidated_df[column].isin(selected_values)]
+
+            # Download button section
+            if not unvalidated_df.empty:
+                download_excel_button(
+                    unvalidated_df,
+                    filename="pendientes_validacion.xlsx",
+                    button_text_prefix="📥 Descargar"
+                )
+
+            # Show record count
+            st.markdown(f"**Mostrando {len(unvalidated_df)} de {total_pending} registros**")
 
             # Validation interface
             st.subheader("Seleccionar actividades para validar")

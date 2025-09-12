@@ -7,6 +7,7 @@ from src.forms.linkedin_form import get_search_details
 from src.services.bedrock_api import get_from_ai, process_response
 from src.auth.authentication import stay_authenticated
 from src.utils.buscar_utils import show_course_filters
+from src.utils.download_utils import download_excel_data, download_excel_button
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -34,6 +35,7 @@ if "show_recommendations_button" not in st.session_state:
 
 if "recommendations" not in st.session_state:
     st.session_state.recommendations = []
+
 
 # Step 1: Select a row from the table
 if st.session_state.selected_row is None or st.session_state.linkedin_results_fail:
@@ -132,7 +134,25 @@ else:
     if st.session_state.show_recommendations_button:
         if st.session_state.total_linkedin > 500:
             st.info("Hay demasiados resultados, por lo que te recomendamos seleccionar aquellos resultados que te interesen antes de hacer clic en el botón 'Recomiéndame con IA!'.")
-        
+
+        # Download button for search results
+        selected_rows = linkedin_results.selection.get("rows", [])
+        if selected_rows:
+            row_count = len(selected_rows)
+            download_data = courses_df.iloc[selected_rows]
+            filename = f"cursos_linkedin_seleccionados_{row_count}_filas.xlsx"
+        else:
+            row_count = len(courses_df)
+            download_data = courses_df
+            filename = f"cursos_linkedin_todos_{row_count}_filas.xlsx"
+
+        download_excel_button(
+            download_data,
+            filename=filename,
+            button_text_prefix="📥 Descargar resultados"
+        )
+
+        # AI recommendation button
         if st.button("✨ Recomiéndame con IA!", type="primary"):
             # Check if user has selected specific courses
             has_selection = len(linkedin_results.selection["rows"]) > 0
@@ -143,7 +163,7 @@ else:
                 st.warning("Has seleccionado demasiados cursos para procesar. Por favor, desselecciona algunos cursos e intenta nuevamente.")
             else:
                 with st.spinner("Analizando recomendaciones con IA... Por favor espera ⏳"):
-                            
+
                     # Prepare contents for AI
                     prompt = st.secrets["prompt_linkedin"]
 
@@ -186,6 +206,13 @@ else:
             hide_index=True, 
             on_select="rerun", 
             selection_mode="single-row")
+
+        # Download button for recommendations
+        download_excel_button(
+            recommendations_df,
+            filename="cursos_linkedin_recomendados.xlsx",
+            button_text_prefix="📥 Descargar recomendados"
+        )
         
         if len(ia_results.selection["rows"]) > 0:
             if st.button("➕ Agregar a la Matriz de Necesidades", type="primary"):

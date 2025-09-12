@@ -5,6 +5,7 @@ from src.data.database_utils import download_demo_db, fetch_matrix, update_final
 from src.forms.edit_matrix_form import get_row_data, validate_form_info, has_data_changed, get_id_from_name, gerencias, subgerencias, areas, desafios, audiencias, modalidades, fuentes, prioridades
 from src.forms.add_initiative_form import add_initiative_form, validate_add_form_info, save_new_initiative
 from src.utils.matrix_utils import show_filters, reload_data, format_asociacion
+from src.utils.download_utils import download_excel_button
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -110,6 +111,14 @@ with tab1:
         # Display filtered dataframe
         if not filtered_df.empty:
             st.markdown(f"**Mostrando {len(filtered_df)} de {len(df)} registros**")
+                    
+            # Download button section
+            download_excel_button(
+                filtered_df,
+                filename="matriz_necesidades_filtrada.xlsx",
+                button_text_prefix="📥 Descargar"
+            )
+
             st.dataframe(
                 filtered_df,
                 use_container_width=True,

@@ -2,3 +2,5 @@
 streamlit-extras
 pandas
 altair
+openpyxl
+xlsxwriter
