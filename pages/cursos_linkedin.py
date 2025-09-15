@@ -30,11 +30,19 @@ if not df.empty:
     if st.button("➕ Agregar Curso", type="primary"):
         st.session_state.show_add_course_dialog = True
 
-    # Initialize session state for selected course
-    if "selected_course_idx" not in st.session_state:
-        st.session_state.selected_course_idx = None
+    # Initialize session state for dialog tracking
+    if "course_details_dialog_open" not in st.session_state:
+        st.session_state.course_details_dialog_open = False
+
+    # Determine dataframe key based on dialog state
+    # When dialog closes, we change the key to reset selection
+    dialog_was_open = st.session_state.course_details_dialog_open
+    st.session_state.course_details_dialog_open = False  # Reset for this render
 
     # Display the dataframe with row selection
+    # Use different keys to reset selection when dialog closes
+    dataframe_key = "courses_table_dialog_closed" if dialog_was_open else "courses_table_normal"
+
     event = st.dataframe(
         df,
         use_container_width=True,
@@ -56,13 +64,17 @@ if not df.empty:
             )
         },
         selection_mode="single-row",
-        on_select="rerun"
+        on_select="rerun",
+        key=dataframe_key
     )
 
     # Show dialog when a row is selected
     if event and event.selection and event.selection.rows:
         selected_idx = event.selection.rows[0]
         selected_row = df.iloc[selected_idx]
+
+        # Mark dialog as open for next render
+        st.session_state.course_details_dialog_open = True
 
         # Show the course details dialog
         show_course_details_dialog(selected_row)

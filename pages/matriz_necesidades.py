@@ -30,6 +30,10 @@ tab1, tab2, tab3, tab4 = st.tabs(["📊 Ver Matriz", "✏️ Editar", "➕ Agreg
 if "filters" not in st.session_state:
     st.session_state.filters = {}
 
+# Initialize global dialog lock to prevent multiple dialogs
+if "dialog_active" not in st.session_state:
+    st.session_state.dialog_active = False
+
 with tab1:
     # Reload data to ensure we have the latest changes
     df = reload_data()
@@ -167,6 +171,23 @@ with tab2:
     # Edit functionality
     if not df.empty:
         st.markdown("""Por favor, selecciona una fila para editar:""")
+
+        # Initialize session state for edit dialog tracking
+        if "edit_matrix_dialog_open" not in st.session_state:
+            st.session_state.edit_matrix_dialog_open = False
+
+        # Determine dataframe key based on dialog state
+        # When dialog closes, we change the key to reset selection
+        edit_dialog_was_open = st.session_state.edit_matrix_dialog_open
+        st.session_state.edit_matrix_dialog_open = False  # Reset for this render
+
+        # If dialog was previously open, it has now closed, so reset the global lock
+        if edit_dialog_was_open:
+            st.session_state.dialog_active = False
+
+        # Use different keys to reset selection when dialog closes
+        dataframe_key = "edit_matrix_dialog_closed" if edit_dialog_was_open else "edit_matrix_normal"
+
         edited_matrix = st.dataframe(
             df,
             use_container_width=True,
@@ -187,7 +208,7 @@ with tab2:
             },
             on_select="rerun",
             selection_mode="single-row",
-            key="edit_matrix_dataframe")
+            key=dataframe_key)
 
         # Check for row selection and show dialog
         selected_rows = edited_matrix.selection.get("rows", [])
@@ -196,8 +217,14 @@ with tab2:
             # Get the selected row data
             row_data = df.iloc[selected_rows[0]]
 
-            # Show the dialog
-            show_edit_matrix_dialog(row_data)
+            # Only show dialog if no other dialog is active
+            if not st.session_state.dialog_active:
+                # Mark dialog as open for next render and set global lock
+                st.session_state.edit_matrix_dialog_open = True
+                st.session_state.dialog_active = True
+
+                # Show the dialog
+                show_edit_matrix_dialog(row_data)
 
         else:
             st.info("👆 Selecciona una fila de la tabla para editarla.")
@@ -239,6 +266,23 @@ with tab4:
     # Delete functionality
     if not df.empty:
         st.markdown("""Por favor, selecciona las filas para eliminar:""")
+
+        # Initialize session state for delete dialog tracking
+        if "delete_matrix_dialog_open" not in st.session_state:
+            st.session_state.delete_matrix_dialog_open = False
+
+        # Determine dataframe key based on dialog state
+        # When dialog closes, we change the key to reset selection
+        delete_dialog_was_open = st.session_state.delete_matrix_dialog_open
+        st.session_state.delete_matrix_dialog_open = False  # Reset for this render
+
+        # If dialog was previously open, it has now closed, so reset the global lock
+        if delete_dialog_was_open:
+            st.session_state.dialog_active = False
+
+        # Use different keys to reset selection when dialog closes
+        delete_dataframe_key = "delete_matrix_dialog_closed" if delete_dialog_was_open else "delete_matrix_normal"
+
         delete_matrix = st.dataframe(
             df,
             use_container_width=True,
@@ -259,7 +303,7 @@ with tab4:
             },
             on_select="rerun",
             selection_mode="multi-row",
-            key="delete_matrix_dataframe")
+            key=delete_dataframe_key)
 
         # Check for row selection and trigger delete dialog
         selected_rows = delete_matrix.selection.get("rows", [])
@@ -268,8 +312,14 @@ with tab4:
             # Get all selected row data
             selected_data = df.iloc[selected_rows]
 
-            # Show delete confirmation dialog
-            show_delete_matrix_dialog(selected_data, df)
+            # Only show dialog if no other dialog is active
+            if not st.session_state.dialog_active:
+                # Mark dialog as open for next render and set global lock
+                st.session_state.delete_matrix_dialog_open = True
+                st.session_state.dialog_active = True
+
+                # Show delete confirmation dialog
+                show_delete_matrix_dialog(selected_data, df)
 
         else:
             st.info("👆 Selecciona una o más filas para eliminarlas.")
