@@ -1,13 +1,10 @@
 import streamlit as st
 import pandas as pd
-import json
-import time
-from src.data.database_utils import get_virtual_courses, add_linkedin_course
+from src.data.database_utils import get_virtual_courses
 from src.forms.linkedin_form import get_search_details
-from src.services.bedrock_api import get_from_ai, process_response
 from src.auth.authentication import stay_authenticated
-from src.utils.buscar_utils import show_course_filters
-from src.utils.download_utils import download_excel_data, download_excel_button
+from src.utils.buscar_utils import show_course_filters, show_ai_recommendation_dialog
+from src.utils.download_utils import download_excel_button
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -35,6 +32,12 @@ if "show_recommendations_button" not in st.session_state:
 
 if "recommendations" not in st.session_state:
     st.session_state.recommendations = []
+
+if "ai_already_run" not in st.session_state:
+    st.session_state.ai_already_run = False
+
+if "ai_selection_used" not in st.session_state:
+    st.session_state.ai_selection_used = []
 
 
 # Step 1: Select a row from the table
@@ -154,77 +157,4 @@ else:
 
         # AI recommendation button
         if st.button("✨ Recomiéndame con IA!", type="primary"):
-            # Check if user has selected specific courses
-            has_selection = len(linkedin_results.selection["rows"]) > 0
-
-            if st.session_state.total_linkedin > 500 and not has_selection:
-                st.warning("Hay demasiados resultados para procesar. Por favor, ajusta tus criterios de búsqueda o selecciona aquellos resultados que te interesen.")
-            elif st.session_state.total_linkedin > 500 and has_selection and len(linkedin_results.selection["rows"]) > 500:
-                st.warning("Has seleccionado demasiados cursos para procesar. Por favor, desselecciona algunos cursos e intenta nuevamente.")
-            else:
-                with st.spinner("Analizando recomendaciones con IA... Por favor espera ⏳"):
-
-                    # Prepare contents for AI
-                    prompt = st.secrets["prompt_linkedin"]
-
-                    filtered_courses = []
-
-                    if len(linkedin_results.selection["rows"]) == 0:
-                        # Reduce the size of the data sent to IA by iterating over all_courses and selecting only the relevant rows for each dict
-                        filtered_courses = [
-                            {
-                                "Title": course.get("Title"),
-                                "Description": course.get("Description")
-                            }
-                            for course in st.session_state.all_courses
-                        ]
-                    else:
-                        filtered_courses = [
-                            {
-                                "Title": course.get("Title"),
-                                "Description": course.get("Description")
-                            }
-                            for course in st.session_state.all_courses
-                            if st.session_state.all_courses.index(course) in linkedin_results.selection["rows"]
-                        ]
-
-                    contents = [json.dumps(filtered_courses, ensure_ascii=False), json.dumps(st.session_state.selected_row.to_dict(), ensure_ascii=False)]
-
-                    # Get recommendations from AI
-                    recommendations_response = get_from_ai(prompt, contents)
-                    st.session_state.recommendations = process_response(recommendations_response)
-
-    if st.session_state.recommendations:
-        # Convert to DataFrame and display in Streamlit
-        st.success(f"Hay {len(st.session_state.recommendations)} curso(s) recomendado(s).")
-        preliminary_df = pd.DataFrame(st.session_state.recommendations)
-        preliminary_df["Title"] = preliminary_df["Title"].str.strip()
-        recommendations_df = pd.merge(preliminary_df, courses_df, on="Title", how="left")
-        ia_results = st.dataframe(
-            recommendations_df, 
-            use_container_width=True, 
-            hide_index=True, 
-            on_select="rerun", 
-            selection_mode="single-row")
-
-        # Download button for recommendations
-        download_excel_button(
-            recommendations_df,
-            filename="cursos_linkedin_recomendados.xlsx",
-            button_text_prefix="📥 Descargar recomendados"
-        )
-        
-        if len(ia_results.selection["rows"]) > 0:
-            if st.button("➕ Agregar a la Matriz de Necesidades", type="primary"):
-                selection = recommendations_df.iloc[ia_results.selection["rows"][0]]
-                add_linkedin_course(selection, st.session_state.selected_row['id'])
-                st.success(f"El curso '{selection['Title']}' ha sido agregado a la matriz de necesidades.")
-                time.sleep(5)
-                user_data = {
-                    "name": st.session_state.name,
-                    "role": st.session_state.role,
-                    "username": st.session_state.username
-                }
-                st.session_state.clear()
-                stay_authenticated(user_data["name"], user_data["role"], user_data["username"])
-                st.rerun()
+            show_ai_recommendation_dialog(courses_df, linkedin_results, st.session_state.selected_row)

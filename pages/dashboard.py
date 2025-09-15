@@ -88,7 +88,7 @@ try:
     # Validation status breakdown tables
     with st.expander("📊 Estado de Validación", expanded=False):
         # By Gerencia
-        st.text("Por Gerencia")
+        st.markdown("**Por Gerencia**")
         if not df_validation.empty:
             gerencia_validation = df_validation.groupby('Gerencia')['Validación'].value_counts().unstack().fillna(0)
             gerencia_validation['Total'] = gerencia_validation.sum(axis=1)
@@ -96,7 +96,7 @@ try:
             st.dataframe(gerencia_validation, use_container_width=True)
 
         # By Desafío Estratégico
-        st.text("Por Desafío Estratégico")
+        st.markdown("**Por Desafío Estratégico**")
         if not df_validation.empty:
             desafio_validation = df_validation.groupby('Desafío Estratégico')['Validación'].value_counts().unstack().fillna(0)
             desafio_validation['Total'] = desafio_validation.sum(axis=1)

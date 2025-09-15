@@ -4,7 +4,7 @@ import time
 from src.data.database_utils import fetch_matrix, validate_matrix_entry, unvalidate_matrix_entry
 from src.utils.matrix_utils import reload_data
 from src.utils.download_utils import download_excel_button
-from src.utils.validar_utils import show_validation_filters
+from src.utils.validar_utils import show_validation_filters, show_validation_dialog, show_unvalidation_dialog
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -77,6 +77,8 @@ with tab1:
                             # Normal filter logic for other columns
                             validated_df = validated_df[validated_df[column].isin(selected_values)]
 
+            st.markdown(f"**Mostrando {len(validated_df)} de {total_validated} registros**")
+
             # Download button section
             if not validated_df.empty:
                 download_excel_button(
@@ -85,8 +87,7 @@ with tab1:
                     button_text_prefix="📥 Descargar"
                 )
 
-            # Display validated activities
-            st.markdown(f"**Mostrando {len(validated_df)} de {total_validated} registros**")
+            # Display validated activities    
             st.dataframe(
                 validated_df,
                 use_container_width=True,
@@ -162,6 +163,9 @@ with tab2:
                             # Normal filter logic for other columns
                             unvalidated_df = unvalidated_df[unvalidated_df[column].isin(selected_values)]
 
+            # Show record count
+            st.markdown(f"**Mostrando {len(unvalidated_df)} de {total_pending} registros**")
+
             # Download button section
             if not unvalidated_df.empty:
                 download_excel_button(
@@ -170,11 +174,8 @@ with tab2:
                     button_text_prefix="📥 Descargar"
                 )
 
-            # Show record count
-            st.markdown(f"**Mostrando {len(unvalidated_df)} de {total_pending} registros**")
-
             # Validation interface
-            st.subheader("Seleccionar actividades para validar")
+            st.subheader("Selecciona las actividades que quieres validar:")
 
             validation_df = st.dataframe(
                 unvalidated_df,
@@ -205,50 +206,7 @@ with tab2:
                 # Get selected data
                 selected_data = unvalidated_df.iloc[selected_rows]
 
-                st.subheader("Actividades seleccionadas para validación:")
-                st.dataframe(
-                    selected_data[['Gerencia', 'Desafío Estratégico', 'Actividad Formativa', 'Audiencia', 'Validación']],
-                    use_container_width=True,
-                    hide_index=True
-                )
-
-                # Validation form
-                with st.form("validation_form"):
-                    st.subheader("Detalles de Validación")
-
-                    # Display the validator's name (non-editable)
-                    st.markdown(f"**Validado por:** {st.session_state.name}")
-                    validated_by = st.session_state.name
-
-                    validation_notes = st.text_area(
-                        "Notas de validación:",
-                        height=100,
-                        help="Comentarios adicionales sobre la validación"
-                    )
-
-                    submitted = st.form_submit_button(
-                        f"✅ Validar {len(selected_rows)} actividad(es)",
-                        type="primary"
-                    )
-
-                    if submitted:
-                        try:
-                            validated_count = 0
-                            for row_idx in selected_rows:
-                                row_data = unvalidated_df.iloc[row_idx]
-                                validate_matrix_entry(
-                                    matrix_id=row_data['id'],
-                                    validated_by=validated_by,
-                                    validation_notes=validation_notes.strip() if validation_notes.strip() else None
-                                )
-                                validated_count += 1
-
-                            st.success(f"✅ {validated_count} actividad(es) validada(s) correctamente.")
-                            time.sleep(2)
-                            st.rerun()
-
-                        except Exception as e:
-                            st.error(f"❌ Error durante la validación: {str(e)}")
+                show_validation_dialog(selected_data)
 
             else:
                 st.info("👆 Selecciona una o más filas para validarlas.")
@@ -334,32 +292,9 @@ with tab3:
             if selected_for_removal:
                 selected_removal_data = validated_df.iloc[selected_for_removal]
 
-                st.warning("⚠️ **ATENCIÓN:** Esta acción removerá el estado de validación de las actividades seleccionadas.")
+                show_unvalidation_dialog(selected_removal_data)
 
-                st.dataframe(
-                    selected_removal_data[['Gerencia', 'Desafío Estratégico', 'Actividad Formativa', 'Audiencia']],
-                    use_container_width=True,
-                    hide_index=True
-                )
-
-                if st.button(f"❌ Remover Validación de {len(selected_for_removal)} actividad(es)", type="secondary"):
-                    try:
-                        removal_count = 0
-                        for row_idx in selected_for_removal:
-                            row_data = validated_df.iloc[row_idx]
-                            unvalidate_matrix_entry(row_data['id'])
-                            removal_count += 1
-
-                        st.success(f"✅ Validación removida de {removal_count} actividad(es).")
-                        time.sleep(2)
-                        st.rerun()
-
-                    except Exception as e:
-                        st.error(f"❌ Error al remover validación: {str(e)}")
-
-            else:
-                st.info("👆 Selecciona actividades para remover su validación.")
         else:
-            st.info("No hay actividades validadas para remover su validación.")
+            st.info("👆 Selecciona actividades para remover su validación.")
     else:
         st.info("No hay datos disponibles.")

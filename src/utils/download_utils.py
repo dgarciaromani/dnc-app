@@ -1,6 +1,36 @@
 import streamlit as st
 import io
 import pandas as pd
+import re
+
+
+def remove_emojis(text):
+    """Remove emojis and other unwanted Unicode characters from text."""
+    if not isinstance(text, str):
+        return text
+
+    # Remove emojis and various Unicode symbols
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        "\U00002700-\U000027BF"  # dingbats
+        "\U0001f926-\U0001f937"  # gestures
+        "\U00010000-\U0010ffff"  # other unicode
+        "\u2640-\u2642"  # gender symbols
+        "\u2600-\u2B55"  # misc symbols
+        "\u200d"  # zero width joiner
+        "\u23cf"  # eject symbol
+        "\u23e9"  # fast forward
+        "\u231a"  # watch
+        "\ufe0f"  # variation selector
+        "\u3030"  # wavy dash
+        "]+",
+        flags=re.UNICODE
+    )
+    return emoji_pattern.sub('', text).strip()
 
 
 def download_excel_data(df):
@@ -19,6 +49,10 @@ def generate_excel_data(df):
         # Remove 'id' column if it exists (typically hidden in display)
         if 'id' in export_df.columns:
             export_df = export_df.drop('id', axis=1)
+
+        # Remove emojis from all string columns
+        for col in export_df.select_dtypes(include=['object', 'string']).columns:
+            export_df[col] = export_df[col].apply(lambda x: remove_emojis(x) if pd.notna(x) else x)
 
         # Try to use xlsxwriter first, fallback to openpyxl
         try:

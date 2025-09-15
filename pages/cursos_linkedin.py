@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from src.data.database_utils import get_linkedin_courses
+from src.utils.linkedin_utils import show_course_details_dialog, show_add_course_dialog
 
 # Authentication check
 if not st.session_state.get("authenticated", False):
@@ -9,7 +10,7 @@ if not st.session_state.get("authenticated", False):
 
 # Make page use full width
 st.set_page_config(layout="wide")
-st.title("Cursos de LinkedIn")
+st.title("Cursos LinkedIn")
 
 # Load data
 linkedin_courses = get_linkedin_courses()
@@ -25,7 +26,9 @@ if not df.empty:
         total_associations = df["Número de Actividades Asociadas"].sum()
         st.metric("🎯 Total de Asociaciones LinkedIn - Matriz", int(total_associations), border=True)
 
-    st.markdown("---")
+    # Add Course Button
+    if st.button("➕ Agregar Curso", type="primary"):
+        st.session_state.show_add_course_dialog = True
 
     # Initialize session state for selected course
     if "selected_course_idx" not in st.session_state:
@@ -61,32 +64,16 @@ if not df.empty:
         selected_idx = event.selection.rows[0]
         selected_row = df.iloc[selected_idx]
 
-        # Create dialog function
-        @st.dialog(f"📋 {selected_row['Nombre del Curso']}", width="large")
-        def show_course_details():
-            # Show activities or message
-            if selected_row["Número de Actividades Asociadas"] > 0:
-                st.markdown("### 📝 Actividades Formativas Asociadas:")
-
-                if pd.notna(selected_row["Actividades Formativas Asociadas"]) and selected_row["Actividades Formativas Asociadas"].strip():
-                    activities = selected_row["Actividades Formativas Asociadas"].split("; ")
-                    for i, activity in enumerate(activities, 1):
-                        if activity.strip():
-                            st.markdown(f"**{i}.** {activity.strip()}")
-                st.markdown("---")
-                st.markdown(f"[🔗 Ver curso en LinkedIn]({selected_row['URL']})")
-            
-            else:
-                st.info("🚫 Este curso no tiene actividades formativas asociadas.")
-                if pd.notna(selected_row["URL"]):
-                    st.markdown("Puedes acceder directamente al curso usando el enlace arriba.")
-
-        # Show the dialog
-        show_course_details()
+        # Show the course details dialog
+        show_course_details_dialog(selected_row)
 
     # Instructions
     if not (event and event.selection and event.selection.rows):
-        st.markdown("💡 **Tip:** Haz clic en cualquier fila para ver las actividades formativas asociadas al curso.")
+        st.info("👆 Haz clic en cualquier fila para ver las actividades formativas asociadas al curso.")
+
+    # Add Course Dialog
+    if st.session_state.get("show_add_course_dialog", False):
+        show_add_course_dialog()
 
 else:
     st.info("No hay cursos de LinkedIn en la base de datos.")

@@ -1,5 +1,6 @@
 import streamlit as st
-from src.data.database_utils import fetch_all
+from src.data.database_utils import fetch_all, update_final_matrix, update_matrix_linkedin_courses, delete_matrix_entry
+import time
 
 # Fetch lookup tables from DB
 gerencias = fetch_all("gerencias")
@@ -13,9 +14,22 @@ prioridades = fetch_all("prioridades")
 linkedin = fetch_all("linkedin_courses")
 
 
-def get_row_data(row_data):
+def get_id_from_name(lookup_dict, name):
+    """Convert name to ID using lookup dictionary"""
+    if name in lookup_dict:
+        return lookup_dict[name]
+    return None
+
+
+@st.dialog("✏️ Editar Fila Seleccionada", width="large")
+def show_edit_matrix_dialog(row_data):
+    """Display edit dialog for matrix row"""
+    # Store original row data for comparison
+    original_row = row_data.to_dict()
+
+    # Create form fields
     with st.form("edit_row_form"):
-        
+
         # Gerencia dropdown
         gerencia_options = [name for name, id in gerencias.items()]
         current_gerencia = row_data.get("Gerencia")
@@ -138,7 +152,7 @@ def get_row_data(row_data):
             "Prioridad (*)",
             options=prioridad_options,
             index=prioridad_index
-        )        
+        )
 
         # LinkedIn course dropdown
         linkedin_options = [None] + [name for name, id in linkedin.items()]
@@ -152,9 +166,10 @@ def get_row_data(row_data):
         )
 
         # Submit button
-        submitted = st.form_submit_button("💾 Guardar cambios", type="primary")
+        submitted = st.form_submit_button("💾 Guardar cambios", type="primary", use_container_width=True)
 
-    return submitted, {
+    # Form data
+    form_info = {
         "gerencia": gerencia_selected,
         "subgerencia": subgerencia_selected,
         "area": area_selected,
@@ -171,57 +186,89 @@ def get_row_data(row_data):
         "prioridad": prioridad_selected,
         "linkedin": linkedin_selected
     }
-            
-        
-def validate_form_info(form_info):
-    # Check required text fields
-    if not form_info["actividad_formativa"] or not form_info["objetivo_desempeno"] or not form_info["contenidos"] or not form_info["skills"] or not form_info["keywords"]:
-        return False
 
-    # Check required dropdown fields (must not be None)
-    required_dropdowns = ["gerencia", "desafio", "audiencia", "modalidad", "fuente", "prioridad"]
-    for field in required_dropdowns:
-        if form_info.get(field) is None:
-            return False
+    if submitted:
+        # Validate form
+        if not actividad_formativa or not objetivo_desempeno or not contenidos or not skills or not keywords:
+            st.error("Por favor completa todos los campos con (*).")
+            return
 
-    # Subgerencia and area are optional (can be None)
-    return True
+        required_dropdowns = ["gerencia", "desafio", "audiencia", "modalidad", "fuente", "prioridad"]
+        for field in required_dropdowns:
+            if form_info.get(field) is None:
+                st.error("Por favor completa todos los campos con (*).")
+                return
 
+        # Check if data actually changed
+        field_mapping = {
+            'gerencia': 'Gerencia',
+            'subgerencia': 'Subgerencia',
+            'area': 'Área',
+            'desafio': 'Desafío Estratégico',
+            'actividad_formativa': 'Actividad Formativa',
+            'objetivo_desempeno': 'Objetivo Desempeño',
+            'contenidos': 'Contenidos',
+            'skills': 'Skills',
+            'keywords': 'Keywords',
+            'audiencia': 'Audiencia',
+            'modalidad': 'Modalidad',
+            'fuente': 'Fuente',
+            'fuente_interna': 'Fuente Interna',
+            'prioridad': 'Prioridad',
+            'linkedin': 'Curso Sugerido LinkedIn'
+        }
 
-def get_id_from_name(lookup_dict, name):
-    """Convert name to ID using lookup dictionary"""
-    if name in lookup_dict:
-        return lookup_dict[name]
-    return None
+        data_changed = False
+        for form_field, db_column in field_mapping.items():
+            original_value = str(original_row.get(db_column, "")).strip()
+            new_value = str(form_info.get(form_field, "")).strip()
+            if original_value != new_value:
+                data_changed = True
+                break
 
+        if not data_changed:
+            st.info("ℹ️ No se detectaron cambios.")
+            time.sleep(2)
+            st.rerun()
+            return
 
-def has_data_changed(original_row, new_form_data):
-    """Compare original row data with new form data to detect changes"""
-    # Define the mapping between form fields and database columns
-    field_mapping = {
-        'gerencia': 'Gerencia',
-        'subgerencia': 'Subgerencia',
-        'area': 'Área',
-        'desafio': 'Desafío Estratégico',
-        'actividad_formativa': 'Actividad Formativa',
-        'objetivo_desempeno': 'Objetivo Desempeño',
-        'contenidos': 'Contenidos',
-        'skills': 'Skills',
-        'keywords': 'Keywords',
-        'audiencia': 'Audiencia',
-        'modalidad': 'Modalidad',
-        'fuente': 'Fuente',
-        'fuente_interna': 'Fuente Interna',
-        'prioridad': 'Prioridad',
-        'linkedin': 'Curso Sugerido LinkedIn'
-    }
+        # Save changes
+        try:
+            # Convert form data to database IDs
+            gerencia_id = get_id_from_name(gerencias, form_info['gerencia'])
+            subgerencia_id = get_id_from_name(subgerencias, form_info['subgerencia'])
+            area_id = get_id_from_name(areas, form_info['area'])
+            desafio_id = get_id_from_name(desafios, form_info['desafio'])
+            audiencia_id = get_id_from_name(audiencias, form_info['audiencia'])
+            modalidad_id = get_id_from_name(modalidades, form_info['modalidad'])
+            fuente_id = get_id_from_name(fuentes, form_info['fuente'])
+            prioridad_id = get_id_from_name(prioridades, form_info['prioridad'])
 
-    # Check each field for changes
-    for form_field, db_column in field_mapping.items():
-        original_value = str(original_row.get(db_column, "")).strip()
-        new_value = str(new_form_data.get(form_field, "")).strip()
+            # Update the database
+            update_final_matrix(
+                gerencia_id=gerencia_id,
+                subgerencia_id=subgerencia_id,
+                area_id=area_id,
+                desafio_id=desafio_id,
+                actividad=form_info['actividad_formativa'],
+                objetivo=form_info['objetivo_desempeno'],
+                contenidos=form_info['contenidos'],
+                skills=form_info['skills'],
+                keywords=form_info['keywords'],
+                modalidad_id=modalidad_id,
+                fuente_id=fuente_id,
+                fuente_interna=form_info['fuente_interna'],
+                audiencia_id=audiencia_id,
+                prioridad_id=prioridad_id,
+                matrix_id=original_row['id']
+            )
 
-        if original_value != new_value:
-            return True
+            # Update LinkedIn course (always call to handle None case for deletion)
+            update_matrix_linkedin_courses(original_row['id'], form_info.get('linkedin'))
 
-    return False
+            st.success("✅ Cambios guardados correctamente.")
+            time.sleep(2)
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"❌ Error al guardar los cambios: {str(e)}")

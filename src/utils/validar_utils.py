@@ -1,4 +1,6 @@
 import streamlit as st
+import time
+from src.data.database_utils import validate_matrix_entry, unvalidate_matrix_entry
 
 
 def show_validation_filters(df, tab_prefix="", session_state_key="validation_filters"):
@@ -123,3 +125,103 @@ def show_validation_filters(df, tab_prefix="", session_state_key="validation_fil
         if st.button("🗑️ Limpiar Filtros", type="primary", key=f"{tab_prefix}_validation_clear_filters"):
             st.session_state[session_state_key] = {}
             st.rerun()
+
+
+def show_validation_dialog(selected_data):
+    @st.dialog("✅ Actividades seleccionadas para validación", width="large")
+    def validation_dialog():
+        st.dataframe(
+            selected_data[['Gerencia', 'Desafío Estratégico', 'Actividad Formativa', 'Audiencia', 'Validación']],
+            use_container_width=True,
+            hide_index=True
+        )
+
+        # Validation form
+        with st.form("validation_form"):
+            st.subheader("Detalles de Validación")
+
+            # Display the validator's name (non-editable)
+            st.markdown(f"**Validado por:** {st.session_state.name}")
+            validated_by = st.session_state.name
+
+            validation_notes = st.text_area(
+                "Notas de validación:",
+                height=100,
+                help="Comentarios adicionales sobre la validación"
+            )
+
+            submitted = st.form_submit_button(
+                f"✅ Validar {len(selected_data)} actividad(es)",
+                type="primary"
+            )
+
+            if submitted:
+                try:
+                    validated_count = 0
+                    for _, row_data in selected_data.iterrows():
+                        validate_matrix_entry(
+                            matrix_id=row_data['id'],
+                            validated_by=validated_by,
+                            validation_notes=validation_notes.strip() if validation_notes.strip() else None
+                        )
+                        validated_count += 1
+
+                    st.success(f"✅ {validated_count} actividad(es) validada(s) correctamente.")
+                    time.sleep(2)
+                    st.rerun()
+
+                except Exception as e:
+                    st.error(f"❌ Error durante la validación: {str(e)}")
+
+    # Show the dialog
+    validation_dialog()
+
+
+def show_unvalidation_dialog(selected_data):
+    @st.dialog("❌ Remover Validación - Actividades seleccionadas", width="large")
+    def unvalidation_dialog():
+        st.dataframe(
+            selected_data[['Gerencia', 'Desafío Estratégico', 'Actividad Formativa', 'Audiencia', 'Validación']],
+            use_container_width=True,
+            hide_index=True
+        )
+
+        # Unvalidation form
+        with st.form("unvalidation_form"):
+            st.subheader("Detalles de Remoción de Validación")
+
+            # Display the unvalidator's name (non-editable)
+            st.markdown(f"**Validación removida por:** {st.session_state.name}")
+            unvalidated_by = st.session_state.name
+
+            unvalidation_notes = st.text_area(
+                "Notas de remoción de validación:",
+                height=100,
+                help="Comentarios adicionales sobre la remoción de validación"
+            )
+
+            st.warning("⚠️ **ATENCIÓN:** Esta acción removerá permanentemente el estado de validación de las actividades seleccionadas.")
+
+            submitted = st.form_submit_button(
+                f"❌ Remover Validación de {len(selected_data)} actividad(es)",
+                type="secondary"
+            )
+
+            if submitted:
+                try:
+                    unvalidated_count = 0
+                    for _, row_data in selected_data.iterrows():
+                        unvalidate_matrix_entry(
+                            matrix_id=row_data['id']
+                        )
+                        unvalidated_count += 1
+
+                    st.success(f"✅ Validación removida de {unvalidated_count} actividad(es) correctamente.")
+                    time.sleep(2)
+                    st.rerun()
+
+                except Exception as e:
+                    st.error(f"❌ Error durante la remoción de validación: {str(e)}")
+
+    # Show the dialog
+    unvalidation_dialog()

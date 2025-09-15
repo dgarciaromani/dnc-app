@@ -606,6 +606,89 @@ def get_linkedin_courses():
     return [dict(row) for row in rows]
 
 
+def add_linkedin_course_manual(course_data, selected_activities=None):
+    """Add a LinkedIn course manually with optional activity associations."""
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        # Insert the LinkedIn course if it doesn't exist
+        cur.execute("""
+            INSERT OR IGNORE INTO linkedin_courses (
+                linkedin_urn,
+                linkedin_course,
+                linkedin_url)
+            VALUES (?, ?, ?)
+        """,
+        (course_data['URN'],
+         course_data['Title'],
+         course_data['URL'])
+        )
+
+        # Get the course ID
+        cur.execute("""
+            SELECT id FROM linkedin_courses
+            WHERE linkedin_urn = ? AND linkedin_course = ? AND linkedin_url = ?
+        """,
+        (course_data['URN'],
+         course_data['Title'],
+         course_data['URL']))
+
+        course_result = cur.fetchone()
+        if not course_result:
+            conn.rollback()
+            return {"success": False, "message": "Failed to retrieve course after insertion"}
+
+        course_id = course_result["id"]
+
+        # If activities were selected, associate them
+        if selected_activities:
+            for activity_id in selected_activities:
+                cur.execute("""
+                    INSERT OR IGNORE INTO matrix_linkedin_courses (
+                        matrix_id,
+                        course_id)
+                    VALUES (?, ?)
+                """,
+                (int(activity_id), course_id))
+
+        conn.commit()
+        return {"success": True, "message": f"Course '{course_data['Title']}' added successfully", "course_id": course_id}
+
+    except Exception as e:
+        conn.rollback()
+        return {"success": False, "message": f"Error adding course: {str(e)}"}
+    finally:
+        conn.close()
+
+
+def get_learning_activities_for_association():
+    """Get all learning activities from final_matrix for association with LinkedIn courses."""
+    query = """
+    SELECT
+        fm.id,
+        fm.actividad_formativa AS "Actividad Formativa",
+        g.name AS "Gerencia",
+        fm.objetivo_desempeno AS "Objetivo Desempeño",
+        fm.skills AS "Skills",
+        fm.keywords AS "Keywords",
+        au.name AS "Audiencia",
+        p.name AS "Prioridad"
+    FROM final_matrix fm
+    LEFT JOIN gerencias g ON fm.gerencia_id = g.id
+    LEFT JOIN audiencias au ON fm.audiencia_id = au.id
+    LEFT JOIN prioridades p ON fm.prioridad_id = p.id
+    ORDER BY fm.actividad_formativa
+    """
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute(query)
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
 def get_raw_data_forms():
     query = """
     SELECT
