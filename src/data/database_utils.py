@@ -3,6 +3,8 @@ import shutil
 import sqlite3
 import os
 import time
+import pandas as pd
+import io
 from src.data import template_desplegables
 
 DB_PATH = "database.db"
@@ -158,6 +160,443 @@ def download_demo_db():
         # Clean up temp file if it exists
         safe_remove_file(temp_db_path)
         return False, f"Error during database download/validation: {str(e)}"
+
+
+def generate_excel_template():
+    # Required columns (must be present)
+    required_columns = [
+        "Gerencia",
+        "Desafío Estratégico",
+        "Actividad Formativa",
+        "Objetivo Desempeño",
+        "Contenidos",
+        "Audiencia",
+        "Modalidad",
+        "Fuente",
+        "Prioridad"
+    ]
+    
+    # Optional columns (can be included but not required)
+    optional_columns = [
+        "Origen",
+        "Subgerencia",
+        "Área",
+        "Skills",
+        "Keywords",
+        "Fuente Interna"
+    ]
+    
+    # Column order as specified by user
+    all_columns = [
+        "Origen",
+        "Gerencia",
+        "Subgerencia",
+        "Área",
+        "Desafío Estratégico",
+        "Actividad Formativa",
+        "Objetivo Desempeño",
+        "Contenidos",
+        "Skills",
+        "Keywords",
+        "Audiencia",
+        "Modalidad",
+        "Fuente",
+        "Fuente Interna",
+        "Prioridad"
+    ]
+    
+    # Fetch dropdown values from database
+    try:
+        gerencias_list = sorted(list(fetch_all("gerencias").keys()))
+        subgerencias_list = sorted(list(fetch_all("subgerencias").keys()))
+        areas_list = sorted(list(fetch_all("areas").keys()))
+        desafios_list = sorted(list(fetch_all("desafios").keys()))
+        audiencias_list = sorted(list(fetch_all("audiencias").keys()))
+        modalidades_list = sorted(list(fetch_all("modalidades").keys()))
+        fuentes_list = sorted(list(fetch_all("fuentes").keys()))
+        prioridades_list = sorted(list(fetch_all("prioridades").keys()))
+        origenes_list = sorted(list(fetch_all("origin").keys()))
+    except Exception:
+        # If database is not available, use empty lists
+        gerencias_list = []
+        subgerencias_list = []
+        areas_list = []
+        desafios_list = []
+        audiencias_list = []
+        modalidades_list = []
+        fuentes_list = []
+        prioridades_list = []
+        origenes_list = []
+    
+    # Create empty DataFrame with column headers
+    df = pd.DataFrame(columns=all_columns)
+    
+    # Create Excel file in memory
+    buffer = io.BytesIO()
+    
+    try:
+        # Try to use xlsxwriter first for better formatting
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name='Datos', index=False)
+            
+            # Get workbook and worksheet objects
+            workbook = writer.book
+            worksheet = writer.sheets['Datos']
+            
+            # Format for required columns header
+            required_format = workbook.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'valign': 'top',
+                'fg_color': '#FFE6E6',  # Light red background
+                'border': 1
+            })
+            
+            # Format for optional columns header
+            optional_format = workbook.add_format({
+                'bold': True,
+                'text_wrap': True,
+                'valign': 'top',
+                'fg_color': '#E6F3FF',  # Light blue background
+                'border': 1
+            })
+            
+            # Write headers with different formatting
+            for col_num, col_name in enumerate(all_columns):
+                if col_name in required_columns:
+                    worksheet.write(0, col_num, col_name, required_format)
+                else:
+                    worksheet.write(0, col_num, col_name, optional_format)
+            
+            # Auto-adjust column widths
+            for i, col in enumerate(all_columns):
+                column_len = max(len(col), 15) + 2
+                worksheet.set_column(i, i, min(column_len, 50))
+            
+            # Add instructions in a second sheet
+            instructions_sheet = workbook.add_worksheet('Instrucciones')
+            
+            # Build instructions list
+            instructions = [
+                ['INSTRUCCIONES PARA LLENAR LA PLANTILLA'],
+                [''],
+                ['COLUMNAS REQUERIDAS (fondo rojo):'],
+                ['- Gerencia: Nombre de la gerencia'],
+                ['- Desafío Estratégico: Nombre del desafío estratégico'],
+                ['- Actividad Formativa: Descripción de la actividad formativa'],
+                ['- Objetivo Desempeño: Objetivo de desempeño'],
+                ['- Contenidos: Contenidos específicos'],
+                ['- Audiencia: Nombre de la audiencia'],
+                ['- Modalidad: Nombre de la modalidad'],
+                ['- Fuente: Nombre de la fuente'],
+                ['- Prioridad: Nombre de la prioridad'],
+                [''],
+                ['COLUMNAS OPCIONALES (fondo azul):'],
+                ['- Origen: Origen de los datos'],
+                ['- Subgerencia: Nombre de la subgerencia'],
+                ['- Área: Nombre del área'],
+                ['- Skills: Habilidades relacionadas'],
+                ['- Keywords: Palabras clave'],
+                ['- Fuente Interna: Fuente interna específica'],
+                [''],
+                ['VALORES DISPONIBLES PARA DROPDOWNS:'],
+                [''],
+            ]
+            
+            # Add dropdown values
+            if origenes_list:
+                instructions.append(['ORIGEN (valores disponibles):'])
+                instructions.append([', '.join(origenes_list)])
+                instructions.append([''])
+            
+            if gerencias_list:
+                instructions.append(['GERENCIA (valores disponibles):'])
+                instructions.append([', '.join(gerencias_list)])
+                instructions.append([''])
+            
+            if subgerencias_list:
+                instructions.append(['SUBGERENCIA (valores disponibles):'])
+                instructions.append([', '.join(subgerencias_list)])
+                instructions.append([''])
+            
+            if areas_list:
+                instructions.append(['ÁREA (valores disponibles):'])
+                instructions.append([', '.join(areas_list)])
+                instructions.append([''])
+            
+            if desafios_list:
+                instructions.append(['DESAFÍO ESTRATÉGICO (valores disponibles):'])
+                instructions.append([', '.join(desafios_list)])
+                instructions.append([''])
+            
+            if audiencias_list:
+                instructions.append(['AUDIENCIA (valores disponibles):'])
+                instructions.append([', '.join(audiencias_list)])
+                instructions.append([''])
+            
+            if modalidades_list:
+                instructions.append(['MODALIDAD (valores disponibles):'])
+                instructions.append([', '.join(modalidades_list)])
+                instructions.append([''])
+            
+            if fuentes_list:
+                instructions.append(['FUENTE (valores disponibles):'])
+                instructions.append([', '.join(fuentes_list)])
+                instructions.append([''])
+            
+            if prioridades_list:
+                instructions.append(['PRIORIDAD (valores disponibles):'])
+                instructions.append([', '.join(prioridades_list)])
+                instructions.append([''])
+            
+            # Add important notes
+            instructions.extend([
+                ['NOTAS IMPORTANTES:'],
+                ['1. Los valores en las columnas de dropdown (Gerencia, Audiencia, etc.)'],
+                ['   deben coincidir EXACTAMENTE con los valores listados arriba.'],
+                ['2. Las columnas requeridas NO pueden estar vacías.'],
+                ['3. Puedes agregar múltiples filas en la hoja "Datos".'],
+                ['4. La primera fila contiene los encabezados - NO la elimines.'],
+                ['5. Si un valor no está en la lista, no será aceptado durante la importación.'],
+            ])
+            
+            # Write instructions
+            bold_format = workbook.add_format({'bold': True, 'font_size': 14})
+            section_format = workbook.add_format({'bold': True})
+            
+            for row_num, instruction in enumerate(instructions):
+                worksheet = instructions_sheet
+                cell_value = instruction[0] if instruction else ''
+                
+                # Format first row (title)
+                if row_num == 0:
+                    worksheet.write(row_num, 0, cell_value, bold_format)
+                # Format section headers
+                elif cell_value.endswith(':'):
+                    worksheet.write(row_num, 0, cell_value, section_format)
+                else:
+                    worksheet.write(row_num, 0, cell_value)
+            
+            # Adjust column width for instructions
+            instructions_sheet.set_column(0, 0, 100)
+            
+    except ImportError:
+        # Fallback to openpyxl if xlsxwriter is not available
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Datos', index=False)
+    
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def validate_excel_columns(df):
+    # Required columns from the matrix view (excluding computed/auto-generated ones)
+    required_columns = [
+        "Gerencia",
+        "Desafío Estratégico",
+        "Actividad Formativa",
+        "Objetivo Desempeño",
+        "Contenidos",
+        "Audiencia",
+        "Modalidad",
+        "Fuente",
+        "Prioridad"
+    ]
+    
+    # Optional columns (nice to have but not required)
+    optional_columns = [
+        "Origen",
+        "Subgerencia",
+        "Área",
+        "Skills",
+        "Keywords",
+        "Fuente Interna"
+    ]
+    
+    # Get actual column names from DataFrame
+    actual_columns = [col.strip() for col in df.columns.tolist()]
+    
+    # Check for required columns
+    missing_required = []
+    for col in required_columns:
+        if col not in actual_columns:
+            missing_required.append(col)
+    
+    if missing_required:
+        return False, f"Faltan columnas requeridas: {', '.join(missing_required)}", missing_required
+    
+    return True, "Todas las columnas requeridas están presentes", []
+
+
+def import_excel_to_database(uploaded_file, origin_name="Excel Import"):
+    """
+    Import Excel file data into the database.
+    Validates columns and imports rows into final_matrix table.
+    
+    Args:
+        uploaded_file: Streamlit UploadedFile object (Excel file)
+        origin_name: Name to use for the origin (default: "Excel Import")
+        
+    Returns:
+        tuple: (success: bool, message: str, imported_count: int)
+    """
+    try:
+        # Read Excel file
+        df = pd.read_excel(uploaded_file)
+        
+        # Validate columns
+        is_valid, validation_message, missing_columns = validate_excel_columns(df)
+        if not is_valid:
+            return False, validation_message, 0
+        
+        # Get lookup dictionaries
+        gerencias_dict = fetch_all("gerencias")
+        subgerencias_dict = fetch_all("subgerencias")
+        areas_dict = fetch_all("areas")
+        desafios_dict = fetch_all("desafios")
+        audiencias_dict = fetch_all("audiencias")
+        modalidades_dict = fetch_all("modalidades")
+        fuentes_dict = fetch_all("fuentes")
+        prioridades_dict = fetch_all("prioridades")
+        origenes_dict = fetch_all("origin")
+        
+        # Ensure origin exists
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("INSERT OR IGNORE INTO origin (name) VALUES (?)", (origin_name,))
+        conn.commit()
+        conn.close()
+        
+        # Import rows
+        imported_count = 0
+        errors = []
+        
+        for idx, row in df.iterrows():
+            try:
+                # Get values from row (handle missing columns gracefully)
+                origen_name = str(row.get("Origen", "")).strip() if pd.notna(row.get("Origen")) else None
+                gerencia_name = str(row.get("Gerencia", "")).strip() if pd.notna(row.get("Gerencia")) else ""
+                subgerencia_name = str(row.get("Subgerencia", "")).strip() if pd.notna(row.get("Subgerencia")) else None
+                area_name = str(row.get("Área", "")).strip() if pd.notna(row.get("Área")) else None
+                desafio_name = str(row.get("Desafío Estratégico", "")).strip() if pd.notna(row.get("Desafío Estratégico")) else ""
+                actividad_formativa = str(row.get("Actividad Formativa", "")).strip() if pd.notna(row.get("Actividad Formativa")) else ""
+                objetivo_desempeno = str(row.get("Objetivo Desempeño", "")).strip() if pd.notna(row.get("Objetivo Desempeño")) else ""
+                contenidos = str(row.get("Contenidos", "")).strip() if pd.notna(row.get("Contenidos")) else ""
+                skills = str(row.get("Skills", "")).strip() if pd.notna(row.get("Skills")) else None
+                keywords = str(row.get("Keywords", "")).strip() if pd.notna(row.get("Keywords")) else None
+                audiencia_name = str(row.get("Audiencia", "")).strip() if pd.notna(row.get("Audiencia")) else ""
+                modalidad_name = str(row.get("Modalidad", "")).strip() if pd.notna(row.get("Modalidad")) else ""
+                fuente_name = str(row.get("Fuente", "")).strip() if pd.notna(row.get("Fuente")) else ""
+                fuente_interna = str(row.get("Fuente Interna", "")).strip() if pd.notna(row.get("Fuente Interna")) else None
+                prioridad_name = str(row.get("Prioridad", "")).strip() if pd.notna(row.get("Prioridad")) else ""
+                
+                # Convert names to IDs
+                origen_id = origenes_dict.get(origen_name) if origen_name else None
+                gerencia_id = gerencias_dict.get(gerencia_name) if gerencia_name else None
+                subgerencia_id = subgerencias_dict.get(subgerencia_name) if subgerencia_name else None
+                area_id = areas_dict.get(area_name) if area_name else None
+                desafio_id = desafios_dict.get(desafio_name) if desafio_name else None
+                audiencia_id = audiencias_dict.get(audiencia_name) if audiencia_name else None
+                modalidad_id = modalidades_dict.get(modalidad_name) if modalidad_name else None
+                fuente_id = fuentes_dict.get(fuente_name) if fuente_name else None
+                prioridad_id = prioridades_dict.get(prioridad_name) if prioridad_name else None
+                
+                # Validate required dropdown fields - must exist in database
+                if not gerencia_id:
+                    errors.append(f"Fila {idx + 2}: Gerencia '{gerencia_name}' no encontrada en la base de datos")
+                    continue
+                if not desafio_id:
+                    errors.append(f"Fila {idx + 2}: Desafío Estratégico '{desafio_name}' no encontrado en la base de datos")
+                    continue
+                if not audiencia_id:
+                    errors.append(f"Fila {idx + 2}: Audiencia '{audiencia_name}' no encontrada en la base de datos")
+                    continue
+                if not modalidad_id:
+                    errors.append(f"Fila {idx + 2}: Modalidad '{modalidad_name}' no encontrada en la base de datos")
+                    continue
+                if not fuente_id:
+                    errors.append(f"Fila {idx + 2}: Fuente '{fuente_name}' no encontrada en la base de datos")
+                    continue
+                if not prioridad_id:
+                    errors.append(f"Fila {idx + 2}: Prioridad '{prioridad_name}' no encontrada en la base de datos")
+                    continue
+                
+                # Validate optional dropdown fields - if provided, must exist in database
+                if origen_name and not origen_id:
+                    errors.append(f"Fila {idx + 2}: Origen '{origen_name}' no encontrado en la base de datos")
+                    continue
+                if subgerencia_name and not subgerencia_id:
+                    errors.append(f"Fila {idx + 2}: Subgerencia '{subgerencia_name}' no encontrada en la base de datos")
+                    continue
+                if area_name and not area_id:
+                    errors.append(f"Fila {idx + 2}: Área '{area_name}' no encontrada en la base de datos")
+                    continue
+                
+                # Validate required text fields
+                if not actividad_formativa:
+                    errors.append(f"Fila {idx + 2}: Actividad Formativa está vacía")
+                    continue
+                if not objetivo_desempeno:
+                    errors.append(f"Fila {idx + 2}: Objetivo Desempeño está vacío")
+                    continue
+                if not contenidos:
+                    errors.append(f"Fila {idx + 2}: Contenidos está vacío")
+                    continue
+                
+                # Prepare data for insertion
+                data = {
+                    "Actividad formativa": actividad_formativa,
+                    "Objetivo de desempeño": objetivo_desempeno,
+                    "Contenidos específicos": contenidos,
+                    "Skills": skills if skills else None,
+                    "Keywords": keywords if keywords else None
+                }
+                
+                # Use provided origin if valid, otherwise use default
+                final_origin = origen_name if (origen_name and origen_id) else origin_name
+                
+                # Ensure the origin exists in database before insertion
+                conn = get_connection()
+                cur = conn.cursor()
+                cur.execute("INSERT OR IGNORE INTO origin (name) VALUES (?)", (final_origin,))
+                conn.commit()
+                conn.close()
+                
+                # Insert row
+                insert_row_into_matrix(
+                    data=data,
+                    origin=final_origin,
+                    gerencia_id=gerencia_id,
+                    subgerencia_id=subgerencia_id,
+                    area_id=area_id,
+                    desafio_id=desafio_id,
+                    modalidad_id=modalidad_id,
+                    audiencia_id=audiencia_id,
+                    fuente_id=fuente_id,
+                    fuente_interna=fuente_interna if fuente_interna else None,
+                    prioridad_id=prioridad_id
+                )
+                
+                imported_count += 1
+                
+            except Exception as e:
+                errors.append(f"Fila {idx + 2}: Error al importar - {str(e)}")
+                continue
+        
+        # Build result message
+        if imported_count > 0:
+            message = f"Se importaron {imported_count} fila(s) correctamente."
+            if errors:
+                message += f" Se encontraron {len(errors)} error(es)."
+            return True, message, imported_count
+        else:
+            error_msg = "No se pudo importar ninguna fila. Errores encontrados:\n" + "\n".join(errors[:10])
+            if len(errors) > 10:
+                error_msg += f"\n... y {len(errors) - 10} error(es) más."
+            return False, error_msg, 0
+            
+    except Exception as e:
+        return False, f"Error al procesar el archivo Excel: {str(e)}", 0
 
 
 def fetch_matrix():

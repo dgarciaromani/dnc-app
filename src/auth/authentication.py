@@ -12,6 +12,10 @@ def authenticate_user(username, password):
     elif username == auth_config.get("user_username") and password == auth_config.get("user_password"):
         return {"username": username, "role": "user", "name": "Jefatura"}
 
+    # Check testing credentials
+    elif username == auth_config.get("tester_username") and password == auth_config.get("tester_password"):
+        return {"username": username, "role": "admin", "name": "Tester"}
+
     return None
 
 

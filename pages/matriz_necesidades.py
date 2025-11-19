@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import time
-from src.data.database_utils import download_demo_db, fetch_matrix, get_matrix_metrics
+from src.data.database_utils import download_demo_db, import_excel_to_database, generate_excel_template, fetch_matrix, get_matrix_metrics
 from src.forms.modify_matrix_form import show_edit_matrix_dialog
 from src.forms.add_matrix_form import add_initiative_form, validate_add_form_info, save_new_initiative
 from src.forms.delete_matrix_form import show_delete_matrix_dialog
@@ -150,7 +150,9 @@ with tab1:
                 st.rerun()
     else:
         st.info("Matriz no disponible. Por favor, completa el cuestionario DNC para generar una matriz de necesidades de aprendizaje.")
-        # Add data to the matrix
+        st.markdown("**Carga una base de datos de ejemplo:**")
+        
+        # Add data to the matrix (example database)
         if st.button("🔄 Cargar base de datos de ejemplo", type="primary"):
             success, message = download_demo_db()
             if success:
@@ -159,6 +161,35 @@ with tab1:
                 st.rerun()
             else:
                 st.error(f"Error al descargar la base de datos: {message}")
+        
+        # Add data to the matrix (upload Excel)
+        st.markdown("**O carga tu propio archivo Excel:**")
+        
+        # Download template button
+        template_data = generate_excel_template()
+        st.download_button(
+            label="📥 Descargar plantilla Excel",
+            data=template_data,
+            file_name="plantilla_matriz_necesidades.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            help="Descarga una plantilla Excel vacía con todas las columnas necesarias para importar datos."
+        )
+        
+        uploaded_file = st.file_uploader(
+            "Subir archivo Excel",
+            type=['xlsx', 'xls'],
+            help="Sube un archivo Excel (.xlsx o .xls) con las columnas de la matriz. El archivo será validado antes de importar los datos.",
+            label_visibility="collapsed"
+        )
+        if uploaded_file is not None:
+            if st.button("📤 Importar archivo Excel", type="primary", use_container_width=True):
+                success, message, imported_count = import_excel_to_database(uploaded_file)
+                if success:
+                    st.success(message)
+                    time.sleep(3)
+                    st.rerun()
+                else:
+                    st.error(message)
 
 with tab2:
     # Reload data to ensure we have the latest changes
