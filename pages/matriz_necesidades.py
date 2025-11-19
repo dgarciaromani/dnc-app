@@ -8,6 +8,11 @@ from src.forms.delete_matrix_form import show_delete_matrix_dialog
 from src.utils.matrix_utils import show_filters, reload_data, format_asociacion
 from src.utils.download_utils import download_excel_button
 
+# Cache template generation to avoid regeneration issues
+@st.cache_data
+def get_template_data():
+    return generate_excel_template()
+
 # Authentication check
 if not st.session_state.get("authenticated", False):
     st.error("❌ Acceso no autorizado. Por favor, inicie sesión.")
@@ -165,14 +170,15 @@ with tab1:
         # Add data to the matrix (upload Excel)
         st.markdown("**O carga tu propio archivo Excel:**")
         
-        # Download template button
-        template_data = generate_excel_template()
+        # Download template button - use cached template
+        template_data = get_template_data()
         st.download_button(
             label="📥 Descargar plantilla Excel",
             data=template_data,
             file_name="plantilla_matriz_necesidades.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            help="Descarga una plantilla Excel vacía con todas las columnas necesarias para importar datos."
+            help="Descarga una plantilla Excel vacía con todas las columnas necesarias para importar datos.",
+            key="download_template_button"
         )
         
         uploaded_file = st.file_uploader(
