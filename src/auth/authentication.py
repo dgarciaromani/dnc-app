@@ -2,6 +2,10 @@ import streamlit as st
 
 # Function to authenticate user
 def authenticate_user(username, password):
+    # Remove trailing and leading spaces from username and password
+    username = username.strip() if username else ""
+    password = password.strip() if password else ""
+    
     auth_config = st.secrets.get("auth", {})
 
     # Check admin credentials
