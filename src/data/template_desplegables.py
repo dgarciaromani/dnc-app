@@ -1,11 +1,11 @@
 template = {
     "gerencias": [
         "Gerencia General",
-        "Ventas",
-        "Operaciones",
-        "Recursos Humanos",
-        "Finanzas",
-        "TI"
+        "Gerencia Ventas",
+        "Gerencia Operaciones",
+        "Gerencia Recursos Humanos",
+        "Gerencia Finanzas",
+        "Gerencia TI"
     ],
     "subgerencias": [
         "Oficina Ejecutiva",
@@ -19,9 +19,7 @@ template = {
         "Contabilidad", 
         "Presupuesto",
         "Infraestructura", 
-        "Desarrollo de Software",        
-        "Superindendencia Madera",
-        "Superindendencia Mantención"
+        "Desarrollo de Software"
     ],
     "areas": [
         "Estrategia", 
@@ -45,9 +43,7 @@ template = {
         "Red", 
         "Hardware",
         "Desarrollo Web", 
-        "Desarrollo de Apps",
-        "Preparación Madera",
-        "Área Maderas"
+        "Desarrollo de Apps"
     ],
     "desafios": [
         "Crecer al doble en 10 años",
@@ -55,16 +51,7 @@ template = {
         "Mejorar la eficiencia operativa",
         "Aumentar la satisfacción del cliente",
         "Reducir costos",
-        "Mejorar la comunicación interna",
-        "El o la Mantendor/a Mecánico Líder asegura realización de mantenciones, diagnóstico de fallas y coordinación de trabajos, verificando que los equipos estén operativos y permitan la continuidad de la producción. Como líder, mantiene el área en óptimas condiciones, asegura la producción y la disponibilidad de las líneas, y realiza el seguimiento de los equipos, repuestos y solicitudes. Supervisa la calidad de los trabajos de contratistas y asegura el cumplimiento de los estándares de calidad, seguridad y medio ambiente.",
-        "El o la Mantenedor/a Mecánico realiza el mantenimiento y diagnóstico de fallas de los equipos del área. Ejecuta mantenciones programadas, inspecciona líneas, diagnostica fallas y atiende quiebres del programa. Mantiene el área en óptimas condiciones, asegura la producción y disponibilidad de las líneas, cumpliendo con los estándares de calidad, seguridad y medio ambiente.",
-        "El o la Operador/a de Sala asegura la producción eficiente de astillas dentro de los parámetros estandarizados de calidad para el digestor, asegurando la continuidad operacional del área por medio del monitoreo de las variables, equipos e instrumentos que intervienen en el proceso.",
-        "El o la Operador/a de Sala Líder es responsable de asegurar la producción eficiente de astillas dentro de los parámetros estandarizados de calidad para el digestor, garantizando la continuidad operacional del área mediante el monitoreo de variables, equipos e instrumentos del proceso. Además de su rol técnico, asume funciones de liderazgo y coordinación, alineando al equipo con los objetivos operativos, de seguridad y mejora continua. Supervisa la ejecución de las tareas, facilita la toma de decisiones en situaciones críticas y promueve la optimización de procesos, contribuyendo al desarrollo y desempeño colectivo del equipo.",
-        "El o la Operador/a de Terreno se encarga de verificar y mantener las condiciones operativas de los equipos, respaldando la continuidad operacional del área mediante la inspección de equipos e instrumentos del proceso e informando desviaciones que pudieran afectar la operación.",
-        "El/la Ingeniero/a de Operaciones del área de Preparación Madera es el/la responsable de liderar la operación diaria del área gestionando al equipo de operadores, administrando recursos producción, monitoreando y controlando procesos, variables y equipos para asegurar la estabilidad operativa, el cumplimiento del plan de producción y los estándares de seguridad y salud ocupacional y medio ambiente, promoviendo además el desarrollo de competencias y buenas prácticas en el equipo en articulación con el Superintendente del área.",
-        "El/la Superintendente de Mantenimiento es responsable de garantizar la confiabilidad y disponibilidad de los equipos, a través de un mantenimiento planificado, eficaz y eficiente, que minimice fallas y asegure la estabilidad operativa de la planta, considerando la dotación, las competencias y la participación activa del equipo de mantenimiento en la mejora continua, junto con el cumplimiento del plan operativo, la seguridad de las personas y la optimización de los recursos técnicos y administrativos del área.",
-        "Responsable de gestionar y supervisar la operación del lárea de Preparación Madera, aseguando la producción continua de astillas en volumen, calidad y costo, conforme a las metas definidas en el Plan Operativo. Su gestión debe resguardar la continuidad operacional, el cumplimiento de las normativas legales, medioambientales y de seguridad, priorizando la Seguridad y Salud Ocupacional de las personas, el cuidado del medio ambiente y la mejora continua del proceso.",  
-        "Responsalbe de asegurar la continuidad operacional de los equipos e instalaciones mecánicas de la planta, a través d ela plainificación, ejecución y supervisión de estrategias de mantenimiento, optimización de procesos y gestión de recursos. Esto implica liderar al equipo técnico, coordinar con otras áreas , garantizar el cumplimiento de normativas de seguridad y calidad, y promover mejoras en la gestión de activos y procedimientos mecánicos, para minimizar fallos y maximizar la disponiblidad de los equipos.",
+        "Mejorar la comunicación interna"
     ],
     "audiencias": [
         "Gerente",
@@ -76,15 +63,7 @@ template = {
         "Analistas",
         "Asistentes",
         "Equipo de Proyecto",
-        "Todos los equipos",
-        "Ingeniero de operaciones / Supervisor",
-        "Jefe(a)  Mecánico(a) / Supervisor",
-        "Mantenedor Mecánico",
-        "Mantenedor Mecánico Líder",
-        "Operador(a) de Sala",
-        "Operador(a) de Sala Líder",
-        "Operador(a) de Terreno",
-        "Superintendente de Mantenimiento / Supervisor"
+        "Todos los equipos"
     ],
     "modalidades": [
         "Presencial",
@@ -102,7 +81,6 @@ template = {
     ],
     "origin": [
         "DNC",
-        "SGD",
-        "Carga Excel"
+        "SGD"
     ]
 }

@@ -195,7 +195,15 @@ with tab1:
                     time.sleep(3)
                     st.rerun()
                 else:
-                    st.error(message)
+                    # Show error summary
+                    if imported_count > 0:
+                        st.warning(f"⚠️ Se importaron {imported_count} fila(s), pero se encontraron errores.")
+                    else:
+                        st.error("❌ No se pudo importar ningún dato debido a errores.")
+                    
+                    # Show detailed errors in an expander
+                    with st.expander("📋 Ver detalles de errores", expanded=True):
+                        st.text(message)
 
 with tab2:
     # Reload data to ensure we have the latest changes

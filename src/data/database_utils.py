@@ -1,3 +1,4 @@
+import streamlit as st
 import requests
 import shutil
 import sqlite3
@@ -428,14 +429,48 @@ def validate_excel_columns(df):
     return True, "Todas las columnas requeridas están presentes", []
 
 
+def get_or_create_id(table_name, name):
+    """
+    Get the ID for a given name in a table, or create it if it doesn't exist.
+    
+    Args:
+        table_name: Name of the table (e.g., "gerencias", "prioridades")
+        name: Name value to look up or create
+        
+    Returns:
+        int: The ID of the name (existing or newly created)
+    """
+    if not name or not name.strip():
+        return None
+    
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Try to get existing ID
+        cur.execute(f"SELECT id FROM {table_name} WHERE name = ?", (name.strip(),))
+        result = cur.fetchone()
+        
+        if result:
+            return result[0]
+        else:
+            # Create new entry
+            cur.execute(f"INSERT INTO {table_name} (name) VALUES (?)", (name.strip(),))
+            conn.commit()
+            return cur.lastrowid
+    finally:
+        conn.close()
+
+
 def import_excel_to_database(uploaded_file, origin_name="Excel Import"):
     """
     Import Excel file data into the database.
-    Validates columns and imports rows into final_matrix table.
+    Only validates: origin, prioridades, fuentes, modalidades, gerencias (auto-creates if missing).
+    All other fields (subgerencias, areas, desafios, audiencias) are auto-created if missing.
     
     Args:
         uploaded_file: Streamlit UploadedFile object (Excel file)
-        origin_name: Name to use for the origin (default: "Excel Import")
+        origin_name: Name to use for the origin if not provided (default: "Excel Import")
         
     Returns:
         tuple: (success: bool, message: str, imported_count: int)
@@ -448,24 +483,6 @@ def import_excel_to_database(uploaded_file, origin_name="Excel Import"):
         is_valid, validation_message, missing_columns = validate_excel_columns(df)
         if not is_valid:
             return False, validation_message, 0
-        
-        # Get lookup dictionaries
-        gerencias_dict = fetch_all("gerencias")
-        subgerencias_dict = fetch_all("subgerencias")
-        areas_dict = fetch_all("areas")
-        desafios_dict = fetch_all("desafios")
-        audiencias_dict = fetch_all("audiencias")
-        modalidades_dict = fetch_all("modalidades")
-        fuentes_dict = fetch_all("fuentes")
-        prioridades_dict = fetch_all("prioridades")
-        origenes_dict = fetch_all("origin")
-        
-        # Ensure origin exists
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("INSERT OR IGNORE INTO origin (name) VALUES (?)", (origin_name,))
-        conn.commit()
-        conn.close()
         
         # Import rows
         imported_count = 0
@@ -490,48 +507,6 @@ def import_excel_to_database(uploaded_file, origin_name="Excel Import"):
                 fuente_interna = str(row.get("Fuente Interna", "")).strip() if pd.notna(row.get("Fuente Interna")) else None
                 prioridad_name = str(row.get("Prioridad", "")).strip() if pd.notna(row.get("Prioridad")) else ""
                 
-                # Convert names to IDs
-                origen_id = origenes_dict.get(origen_name) if origen_name else None
-                gerencia_id = gerencias_dict.get(gerencia_name) if gerencia_name else None
-                subgerencia_id = subgerencias_dict.get(subgerencia_name) if subgerencia_name else None
-                area_id = areas_dict.get(area_name) if area_name else None
-                desafio_id = desafios_dict.get(desafio_name) if desafio_name else None
-                audiencia_id = audiencias_dict.get(audiencia_name) if audiencia_name else None
-                modalidad_id = modalidades_dict.get(modalidad_name) if modalidad_name else None
-                fuente_id = fuentes_dict.get(fuente_name) if fuente_name else None
-                prioridad_id = prioridades_dict.get(prioridad_name) if prioridad_name else None
-                
-                # Validate required dropdown fields - must exist in database
-                if not gerencia_id:
-                    errors.append(f"Fila {idx + 2}: Gerencia '{gerencia_name}' no encontrada en la base de datos")
-                    continue
-                if not desafio_id:
-                    errors.append(f"Fila {idx + 2}: Desafío Estratégico '{desafio_name}' no encontrado en la base de datos")
-                    continue
-                if not audiencia_id:
-                    errors.append(f"Fila {idx + 2}: Audiencia '{audiencia_name}' no encontrada en la base de datos")
-                    continue
-                if not modalidad_id:
-                    errors.append(f"Fila {idx + 2}: Modalidad '{modalidad_name}' no encontrada en la base de datos")
-                    continue
-                if not fuente_id:
-                    errors.append(f"Fila {idx + 2}: Fuente '{fuente_name}' no encontrada en la base de datos")
-                    continue
-                if not prioridad_id:
-                    errors.append(f"Fila {idx + 2}: Prioridad '{prioridad_name}' no encontrada en la base de datos")
-                    continue
-                
-                # Validate optional dropdown fields - if provided, must exist in database
-                if origen_name and not origen_id:
-                    errors.append(f"Fila {idx + 2}: Origen '{origen_name}' no encontrado en la base de datos")
-                    continue
-                if subgerencia_name and not subgerencia_id:
-                    errors.append(f"Fila {idx + 2}: Subgerencia '{subgerencia_name}' no encontrada en la base de datos")
-                    continue
-                if area_name and not area_id:
-                    errors.append(f"Fila {idx + 2}: Área '{area_name}' no encontrada en la base de datos")
-                    continue
-                
                 # Validate required text fields
                 if not actividad_formativa:
                     errors.append(f"Fila {idx + 2}: Actividad Formativa está vacía")
@@ -543,6 +518,37 @@ def import_excel_to_database(uploaded_file, origin_name="Excel Import"):
                     errors.append(f"Fila {idx + 2}: Contenidos está vacío")
                     continue
                 
+                # Validate and auto-create IDs for validated fields (origin, prioridades, fuentes, modalidades, gerencias)
+                if not gerencia_name:
+                    errors.append(f"Fila {idx + 2}: Gerencia está vacía")
+                    continue
+                gerencia_id = get_or_create_id("gerencias", gerencia_name)
+                
+                if not modalidad_name:
+                    errors.append(f"Fila {idx + 2}: Modalidad está vacía")
+                    continue
+                modalidad_id = get_or_create_id("modalidades", modalidad_name)
+                
+                if not fuente_name:
+                    errors.append(f"Fila {idx + 2}: Fuente está vacía")
+                    continue
+                fuente_id = get_or_create_id("fuentes", fuente_name)
+                
+                if not prioridad_name:
+                    errors.append(f"Fila {idx + 2}: Prioridad está vacía")
+                    continue
+                prioridad_id = get_or_create_id("prioridades", prioridad_name)
+                
+                # Use provided origin or default
+                final_origin = origen_name if origen_name else origin_name
+                origen_id = get_or_create_id("origin", final_origin)
+                
+                # Auto-create IDs for non-validated fields (subgerencias, areas, desafios, audiencias)
+                subgerencia_id = get_or_create_id("subgerencias", subgerencia_name) if subgerencia_name else None
+                area_id = get_or_create_id("areas", area_name) if area_name else None
+                desafio_id = get_or_create_id("desafios", desafio_name) if desafio_name else None
+                audiencia_id = get_or_create_id("audiencias", audiencia_name) if audiencia_name else None
+                
                 # Prepare data for insertion
                 data = {
                     "Actividad formativa": actividad_formativa,
@@ -551,16 +557,6 @@ def import_excel_to_database(uploaded_file, origin_name="Excel Import"):
                     "Skills": skills if skills else None,
                     "Keywords": keywords if keywords else None
                 }
-                
-                # Use provided origin if valid, otherwise use default
-                final_origin = origen_name if (origen_name and origen_id) else origin_name
-                
-                # Ensure the origin exists in database before insertion
-                conn = get_connection()
-                cur = conn.cursor()
-                cur.execute("INSERT OR IGNORE INTO origin (name) VALUES (?)", (final_origin,))
-                conn.commit()
-                conn.close()
                 
                 # Insert row
                 insert_row_into_matrix(
@@ -584,16 +580,18 @@ def import_excel_to_database(uploaded_file, origin_name="Excel Import"):
                 continue
         
         # Build result message
-        if imported_count > 0:
-            message = f"Se importaron {imported_count} fila(s) correctamente."
-            if errors:
-                message += f" Se encontraron {len(errors)} error(es)."
-            return True, message, imported_count
+        if errors:
+            error_msg = f"❌ Se encontraron {len(errors)} error(es) durante la importación:\n\n"
+            for i, error in enumerate(errors, 1):
+                error_msg += f"{i}. {error}\n"
+            if imported_count > 0:
+                error_msg += f"\n✅ Se importaron {imported_count} fila(s) correctamente antes de encontrar los errores."
+            else:
+                error_msg += f"\n⚠️ No se importó ninguna fila debido a los errores encontrados."
+            return False, error_msg, imported_count
         else:
-            error_msg = "No se pudo importar ninguna fila. Errores encontrados:\n" + "\n".join(errors[:10])
-            if len(errors) > 10:
-                error_msg += f"\n... y {len(errors) - 10} error(es) más."
-            return False, error_msg, 0
+            message = f"✅ Se importaron {imported_count} fila(s) correctamente."
+            return True, message, imported_count
             
     except Exception as e:
         return False, f"Error al procesar el archivo Excel: {str(e)}", 0
@@ -1390,7 +1388,7 @@ def get_matrix_metrics(origin_filter=None, gerencia_filter=None, subgerencia_fil
         # Build WHERE clause
         where_clause = " AND ".join(where_conditions) if where_conditions else ""
 
-        # Build activities query with asociaciones filter
+        # Build activities query with asociaciones filter (LinkedIn courses only - update when other sources are added)
         activities_where = where_clause
         if asociaciones_filter:
             if "Con cursos asociados" in asociaciones_filter and "Sin cursos asociados" in asociaciones_filter:

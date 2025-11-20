@@ -7,6 +7,9 @@ from src.data.database_utils import add_linkedin_course
 from src.auth.authentication import stay_authenticated
 import time
 
+# Maximum number of LinkedIn rows that can be sent to AI
+MAX_LINKEDIN_ROWS_FOR_AI = 500
+
 def show_course_filters(df):
     """Display filters for course search page (Estado, Gerencia, Audiencia, Prioridad)"""
     # Create filter columns
@@ -104,10 +107,10 @@ def show_ai_recommendation_dialog(courses_df, linkedin_results, selected_row):
         # Check if user has selected specific courses
         has_selection = len(linkedin_results.selection["rows"]) > 0
 
-        if st.session_state.total_linkedin > 500 and not has_selection:
-            st.warning("Hay demasiados resultados para procesar. Por favor, ajusta tus criterios de búsqueda o selecciona aquellos resultados que te interesen.")
+        if st.session_state.total_linkedin > MAX_LINKEDIN_ROWS_FOR_AI and not has_selection:
+            st.warning("Hay demasiados resultados para procesar (límite: {MAX_LINKEDIN_ROWS_FOR_AI}). Por favor, ajusta tus criterios de búsqueda o selecciona aquellos resultados que te interesen.")
             return
-        elif st.session_state.total_linkedin > 500 and has_selection and len(linkedin_results.selection["rows"]) > 500:
+        elif st.session_state.total_linkedin > MAX_LINKEDIN_ROWS_FOR_AI and has_selection and len(linkedin_results.selection["rows"]) > MAX_LINKEDIN_ROWS_FOR_AI:
             st.warning("Has seleccionado demasiados cursos para procesar. Por favor, desselecciona algunos cursos e intenta nuevamente.")
             return
 

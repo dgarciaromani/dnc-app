@@ -3,7 +3,7 @@ import pandas as pd
 from src.data.database_utils import get_virtual_courses
 from src.forms.linkedin_form import get_search_details
 from src.auth.authentication import stay_authenticated
-from src.utils.buscar_utils import show_course_filters, show_ai_recommendation_dialog
+from src.utils.buscar_utils import show_course_filters, show_ai_recommendation_dialog, MAX_LINKEDIN_ROWS_FOR_AI
 from src.utils.download_utils import download_excel_button
 
 # Authentication check
@@ -135,8 +135,8 @@ else:
         st.session_state.show_recommendations_button = True
 
     if st.session_state.show_recommendations_button:
-        if st.session_state.total_linkedin > 500:
-            st.info("Hay demasiados resultados, por lo que te recomendamos seleccionar aquellos resultados que te interesen antes de hacer clic en el botón 'Recomiéndame con IA!'.")
+        if st.session_state.total_linkedin > MAX_LINKEDIN_ROWS_FOR_AI:
+            st.info(f"Hay demasiados resultados (más de {MAX_LINKEDIN_ROWS_FOR_AI}), por lo que te recomendamos seleccionar aquellos resultados que te interesen antes de hacer clic en el botón 'Recomiéndame con IA!'.")
 
         # Download button for search results
         selected_rows = linkedin_results.selection.get("rows", [])
