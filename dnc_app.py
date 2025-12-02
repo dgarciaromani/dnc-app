@@ -2,6 +2,7 @@ import streamlit as st
 import os
 from src.data.database_utils import fill_database_from_template
 from src.auth.authentication import hide_sidebar, authenticate_user, logout
+from src.utils.clarity_utils import init_clarity
 
 # Database initialization
 if not os.path.exists("database.db"):
@@ -81,6 +82,18 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Initialize Microsoft Clarity analytics (if project ID is configured)
+# Only initialize once per session to avoid duplicate script tags
+if "clarity_initialized" not in st.session_state:
+    try:
+        clarity_project_id = st.secrets.get("clarity_project_id", "")
+        if clarity_project_id:
+            init_clarity(clarity_project_id)
+            st.session_state.clarity_initialized = True
+    except (AttributeError, KeyError):
+        # Secrets not configured or clarity_project_id not set - skip initialization
+        st.session_state.clarity_initialized = True  # Mark as initialized to avoid retrying
 
 # Show user info in sidebar
 with st.sidebar:
